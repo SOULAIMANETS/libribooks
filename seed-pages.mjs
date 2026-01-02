@@ -13,6 +13,7 @@ const client = new Client({
   database: process.env.POSTGRES_DATABASE,
   password: process.env.POSTGRES_PASSWORD,
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
+  ssl: { rejectUnauthorized: false },
 });
 
 async function seedPages() {

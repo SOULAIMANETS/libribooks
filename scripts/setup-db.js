@@ -6,9 +6,10 @@ require('dotenv').config();
 const pool = new Pool({
   user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
-  database: 'libribooks', // Ensure we connect to the libribooks database
+  database: process.env.POSTGRES_DATABASE || 'libribooks',
   password: process.env.POSTGRES_PASSWORD,
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
+  ssl: process.env.POSTGRES_HOST !== 'localhost' ? { rejectUnauthorized: false } : undefined,
 });
 
 async function setupDatabase() {
@@ -16,7 +17,7 @@ async function setupDatabase() {
   try {
     console.log('Reading schema.sql...');
     const schema = fs.readFileSync(path.join(__dirname, '../schema.sql'), 'utf-8');
-    
+
     console.log('Dropping existing tables...');
     await client.query(`
       DROP TABLE IF EXISTS site_settings CASCADE;
@@ -39,7 +40,7 @@ async function setupDatabase() {
 
     console.log('Executing schema.sql...');
     await client.query(schema);
-    
+
     console.log('Database setup complete.');
   } catch (error) {
     console.error('Error setting up database:', error);
