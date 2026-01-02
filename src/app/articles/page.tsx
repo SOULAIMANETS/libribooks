@@ -26,8 +26,13 @@ async function getArticles() {
     JOIN authors au ON a.author_id = au.id
     ORDER BY a.published_date DESC
   `;
-  const res = await db.query(query);
-  return res.rows;
+  try {
+    const res = await db.query(query);
+    return res.rows;
+  } catch (error) {
+    console.error('Failed to fetch articles:', error);
+    return [];
+  }
 }
 
 export default async function ArticlesPage() {
@@ -48,16 +53,16 @@ export default async function ArticlesPage() {
         {articles.map((article) => (
           <Card key={article.slug} className="flex flex-col md:flex-row overflow-hidden">
             <div className="md:w-1/3">
-               <div className="relative aspect-video w-full">
-                  <Image
-                    src={article.coverImage || '/placeholder.png'}
-                    alt={article.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                     data-ai-hint="article cover"
-                  />
-               </div>
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={article.coverImage || '/placeholder.png'}
+                  alt={article.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  data-ai-hint="article cover"
+                />
+              </div>
             </div>
             <div className="md:w-2/3 flex flex-col">
               <CardHeader>
@@ -66,7 +71,7 @@ export default async function ArticlesPage() {
                     {article.title}
                   </Link>
                 </CardTitle>
-                 <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   <span>By {article.author}</span> &middot; <span>{format(new Date(article.date), 'MMMM d, yyyy')}</span>
                 </div>
               </CardHeader>

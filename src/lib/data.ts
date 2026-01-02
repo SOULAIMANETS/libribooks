@@ -71,36 +71,46 @@ export async function getHomePageData() {
     ORDER BY b.id DESC
   `;
 
-  const featuredBooksRes = await db.query(featuredBooksQuery);
-  const allBooksRes = await db.query(allBooksQuery);
-  const authorsRes = await db.query('SELECT id, name, bio, image, slug FROM authors ORDER BY id DESC');
-  const categoriesRes = await db.query('SELECT name FROM categories ORDER BY name');
+  try {
+    const featuredBooksRes = await db.query(featuredBooksQuery);
+    const allBooksRes = await db.query(allBooksQuery);
+    const authorsRes = await db.query('SELECT id, name, bio, image, slug FROM authors ORDER BY id DESC');
+    const categoriesRes = await db.query('SELECT name FROM categories ORDER BY name');
 
-  const featuredBooks: Book[] = featuredBooksRes.rows.map((book: any) => ({
-    ...book,
-    tags: book.tags[0] === null ? [] : book.tags,
-    reviews: book.reviews || [],
-    quotes: book.quotes || []
-  }));
+    const featuredBooks: Book[] = featuredBooksRes.rows.map((book: any) => ({
+      ...book,
+      tags: book.tags[0] === null ? [] : book.tags,
+      reviews: book.reviews || [],
+      quotes: book.quotes || []
+    }));
 
-  const allBooks: Book[] = allBooksRes.rows.map((book: any) => ({
-    ...book,
-    tags: book.tags[0] === null ? [] : book.tags,
-    reviews: book.reviews || [],
-    quotes: book.quotes || []
-  }));
+    const allBooks: Book[] = allBooksRes.rows.map((book: any) => ({
+      ...book,
+      tags: book.tags[0] === null ? [] : book.tags,
+      reviews: book.reviews || [],
+      quotes: book.quotes || []
+    }));
 
-  const authors: Author[] = authorsRes.rows.map((author: any) => ({
-    ...author,
-    image: author.image || '/uploads/default-author.jpg'
-  }));
+    const authors: Author[] = authorsRes.rows.map((author: any) => ({
+      ...author,
+      image: author.image || '/uploads/default-author.jpg'
+    }));
 
-  const categories = ['All', ...categoriesRes.rows.map((row: any) => row.name)];
+    const categories = ['All', ...categoriesRes.rows.map((row: any) => row.name)];
 
-  return {
-    featuredBooks,
-    allBooks,
-    authors,
-    categories,
-  };
+    return {
+      featuredBooks,
+      allBooks,
+      authors,
+      categories,
+    };
+  } catch (error) {
+    console.error('Failed to fetch home page data:', error);
+    return {
+      featuredBooks: [],
+      allBooks: [],
+      authors: [],
+      categories: ['All'],
+    };
+  }
 }

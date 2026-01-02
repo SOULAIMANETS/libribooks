@@ -23,15 +23,21 @@ async function initializePool() {
     ssl: process.env.POSTGRES_HOST !== 'localhost' ? { rejectUnauthorized: false } : undefined,
   });
 
-  // Ensure faqs and slug columns exist
-  try {
-    await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS faqs JSONB DEFAULT '[]'::jsonb`);
-    await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE`);
-    await pool.query(`ALTER TABLE authors ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE`);
-    console.log('✓ Database schema initialized - added faqs and slug columns to books and authors tables');
-  } catch (error: any) {
-    console.warn('⚠ Failed to add faqs or slug columns to database:', error?.message || error);
-    // Continue anyway, the columns might already exist
+  // Ensure faqs and slug columns exist - Skip during build phase to avoid build failures
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
+  if (!isBuildPhase) {
+    try {
+      await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS faqs JSONB DEFAULT '[]'::jsonb`);
+      await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE`);
+      await pool.query(`ALTER TABLE authors ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE`);
+      console.log('✓ Database schema initialized - added faqs and slug columns to books and authors tables');
+    } catch (error: any) {
+      console.warn('⚠ Failed to add faqs or slug columns to database:', error?.message || error);
+      // Continue anyway, the columns might already exist
+    }
+  } else {
+    console.log('Skipping database schema initialization during build phase.');
   }
 
   console.log('Database pool initialized.');

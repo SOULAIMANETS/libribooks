@@ -12,56 +12,61 @@ import type { Article } from '@/lib/types';
 
 
 export async function generateStaticParams() {
-  const res = await db.query('SELECT slug FROM articles');
-  return res.rows.map((article: { slug: string }) => ({
-    slug: article.slug,
-  }));
+  try {
+    const res = await db.query('SELECT slug FROM articles');
+    return res.rows.map((article: { slug: string }) => ({
+      slug: article.slug,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch articles for static params:', error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-    const resolvedParams = await params;
-    const query = `
+  const resolvedParams = await params;
+  const query = `
       SELECT a.title, a.image as "coverImage", a.published_date as date, au.name as author, SUBSTRING(a.content, 1, 160) as excerpt
       FROM articles a
       JOIN authors au ON a.author_id = au.id
       WHERE a.slug = $1
     `;
-    const res = await db.query(query, [resolvedParams.slug]);
-    const article = res.rows[0];
+  const res = await db.query(query, [resolvedParams.slug]);
+  const article = res.rows[0];
 
-    if (!article) {
-        return {};
-    }
+  if (!article) {
+    return {};
+  }
 
-    const pageUrl = `/articles/${resolvedParams.slug}`;
-    const imageUrl = article.coverImage;
+  const pageUrl = `/articles/${resolvedParams.slug}`;
+  const imageUrl = article.coverImage;
 
-    return {
-        title: article.title,
-        description: article.excerpt,
-        openGraph: {
-            title: article.title,
-            description: article.excerpt,
-            url: pageUrl,
-            type: 'article',
-            publishedTime: article.date ? new Date(article.date).toISOString() : new Date().toISOString(),
-            authors: [article.author],
-            images: [
-                {
-                    url: imageUrl,
-                    width: 800,
-                    height: 400,
-                    alt: article.title,
-                },
-            ],
+  return {
+    title: article.title,
+    description: article.excerpt,
+    openGraph: {
+      title: article.title,
+      description: article.excerpt,
+      url: pageUrl,
+      type: 'article',
+      publishedTime: article.date ? new Date(article.date).toISOString() : new Date().toISOString(),
+      authors: [article.author],
+      images: [
+        {
+          url: imageUrl,
+          width: 800,
+          height: 400,
+          alt: article.title,
         },
-        twitter: {
-            card: 'summary_large_image',
-            title: article.title,
-            description: article.excerpt,
-            images: [imageUrl],
-        },
-    };
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.excerpt,
+      images: [imageUrl],
+    },
+  };
 }
 
 async function getArticle(slug: string) {
@@ -121,7 +126,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-       <JsonLd<SchemaArticle>
+      <JsonLd<SchemaArticle>
         item={{
           '@context': 'https://schema.org',
           '@type': 'Article',
@@ -138,15 +143,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <main className="flex-1 w-full py-12">
         <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative aspect-video w-full mb-8">
-             <Image
-                src={article.image || '/placeholder.png'}
-                alt={article.title}
-                fill
-                className="object-cover rounded-lg"
-                sizes="(max-width: 1024px) 100vw, 896px"
-                data-ai-hint="article hero"
-                priority
-              />
+            <Image
+              src={article.image || '/placeholder.png'}
+              alt={article.title}
+              fill
+              className="object-cover rounded-lg"
+              sizes="(max-width: 1024px) 100vw, 896px"
+              data-ai-hint="article hero"
+              priority
+            />
           </div>
 
           <h1 className="text-3xl md:text-4xl font-headline font-bold mb-4">{article.title}</h1>
