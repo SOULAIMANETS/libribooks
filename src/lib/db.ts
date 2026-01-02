@@ -1,4 +1,8 @@
 import { Pool } from 'pg';
+import dns from 'dns';
+
+// Force IPV4 resolution for Supabase on Vercel
+dns.setDefaultResultOrder('ipv4first');
 
 let pool: Pool;
 
