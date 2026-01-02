@@ -13,22 +13,10 @@ async function initializePool() {
   console.log('POSTGRES_DATABASE:', process.env.POSTGRES_DATABASE);
   console.log('POSTGRES_PORT:', process.env.POSTGRES_PORT);
 
-  // Resolve hostname to IPv4 first to avoid Vercel IPv6 issues
-  let host = process.env.POSTGRES_HOST;
-  try {
-    if (host && !host.includes('localhost') && !host.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-      const { address } = await dns.promises.lookup(host, { family: 4 });
-      console.log(`Resolved ${host} to ${address}`);
-      host = address;
-    }
-  } catch (e) {
-    console.warn('Failed to resolve hostname to IPv4, using original host:', e);
-  }
-
   // Create pool
   pool = new Pool({
     user: process.env.POSTGRES_USER,
-    host: host,
+    host: process.env.POSTGRES_HOST,
     database: process.env.POSTGRES_DATABASE,
     password: process.env.POSTGRES_PASSWORD,
     port: parseInt(process.env.POSTGRES_PORT || '5432'),
