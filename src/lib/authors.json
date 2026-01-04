@@ -1,0 +1,39 @@
+
+[
+  {
+    "id": 1,
+    "name": "Matt Haig",
+    "image": "https://picsum.photos/400/400?random=11",
+    "bio": "Matt Haig is an English author and journalist. He has written both fiction and non-fiction books for children and adults, often in the speculative fiction genre. His work often explores themes of mental health and human nature."
+  },
+  {
+    "id": 2,
+    "name": "Andy Weir",
+    "image": "https://picsum.photos/400/400?random=12",
+    "bio": "Andy Weir is an American novelist and former computer programmer. He is best known for his debut novel, \"The Martian\". His works are known for their scientific accuracy and humor."
+  },
+  {
+    "id": 3,
+    "name": "James Clear",
+    "image": "https://picsum.photos/400/400?random=13",
+    "bio": "James Clear is an author, and speaker focused on habits, decision-making, and continuous improvement. His book, \"Atomic Habits,\" has sold over 15 million copies worldwide and has been translated into over 50 languages."
+  },
+  {
+    "id": 4,
+    "name": "Alex Michaelides",
+    "image": "https://picsum.photos/400/400?random=14",
+    "bio": "Alex Michaelides is a bestselling British-Cypriot author and screenwriter. His debut novel, \"The Silent Patient,\" was a No. 1 New York Times bestseller and has been sold in a record-breaking 49 countries."
+  },
+  {
+    "id": 5,
+    "name": "Frank Herbert",
+    "image": "https://picsum.photos/400/400?random=15",
+    "bio": "Frank Herbert was an American science fiction author best known for his novel \"Dune\" and its five sequels. The Dune saga is one of the best-selling science fiction series of all time."
+  },
+  {
+    "id": 6,
+    "name": "Tara Westover",
+    "image": "https://picsum.photos/400/400?random=16",
+    "bio": "Tara Westover is an American memoirist, essayist and historian. Her memoir, \"Educated\", debuted at #1 on The New York Times bestseller list and was a finalist for a number of national awards."
+  }
+]

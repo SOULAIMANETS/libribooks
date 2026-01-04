@@ -1,0 +1,75 @@
+
+[
+    {
+        "id": 1,
+        "name": "Fantasy"
+    },
+    {
+        "id": 2,
+        "name": "Contemporary"
+    },
+    {
+        "id": 3,
+        "name": "Philosophical"
+    },
+    {
+        "id": 4,
+        "name": "Space"
+    },
+    {
+        "id": 5,
+        "name": "Adventure"
+    },
+    {
+        "id": 6,
+        "name": "Hard Sci-Fi"
+    },
+    {
+        "id": 7,
+        "name": "Self-Help"
+    },
+    {
+        "id": 8,
+        "name": "Productivity"
+    },
+    {
+        "id": 9,
+        "name": "Psychology"
+    },
+    {
+        "id": 10,
+        "name": "Mystery"
+    },
+    {
+        "id": 11,
+        "name": "Psychological"
+    },
+    {
+        "id": 12,
+        "name": "Suspense"
+    },
+    {
+        "id": 13,
+        "name": "Classic"
+    },
+    {
+        "id": 14,
+        "name": "Politics"
+    },
+    {
+        "id": 15,
+        "name": "Epic"
+    },
+    {
+        "id": 16,
+        "name": "Memoir"
+    },
+    {
+        "id": 17,
+        "name": "Biography"
+    },
+    {
+        "id": 18,
+        "name": "Education"
+    }
+]

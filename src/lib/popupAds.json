@@ -1,0 +1,19 @@
+
+[
+  {
+    "id": 1,
+    "name": "Summer Sale",
+    "content": "<div class='text-center p-4'><h3 class='text-2xl font-bold mb-2'>Summer Reading Sale!</h3><p class='mb-4'>Get 20% off on all fiction books for a limited time. Use code <strong class='bg-yellow-200 text-yellow-800 px-2 py-1 rounded'>SUMMER20</strong> at checkout!</p><a href='#' class='inline-block bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700'>Shop Now</a></div>",
+    "displayDelay": 5,
+    "displayDuration": 15,
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "name": "Newsletter Signup",
+    "content": "<div class='text-center p-4'><h3 class='text-xl font-bold mb-2'>Join Our Newsletter!</h3><p class='mb-4'>Get the latest book reviews and articles delivered straight to your inbox.</p><form class='flex gap-2 justify-center'><input type='email' placeholder='Enter your email' class='px-3 py-2 border rounded-md w-full max-w-xs' /><button type='submit' class='bg-gray-800 text-white px-4 py-2 rounded-md'>Subscribe</button></form></div>",
+    "displayDelay": 10,
+    "displayDuration": 20,
+    "isActive": false
+  }
+]

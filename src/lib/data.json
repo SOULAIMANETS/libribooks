@@ -1,0 +1,182 @@
+
+[
+  {
+    "id": 1,
+    "title": "The Midnight Library",
+    "authors": ["Matt Haig"],
+    "authorIds": [1],
+    "coverImage": "https://picsum.photos/400/600?random=1",
+    "review": "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices . . . Would you have done anything different, if you had the chance to undo your regrets? A dazzling novel about all the choices that go into a life well lived. The Midnight Library is a story of hope. It's about living the life you have, and making the most of it.",
+    "purchaseUrls": {
+      "paperback": "#",
+      "ebook": "#"
+    },
+    "category": "Fiction",
+    "tags": ["Fantasy", "Contemporary", "Philosophical"],
+    "quotes": [
+      "The only way to learn is to live.",
+      "Doing one thing differently is often the same as doing everything differently.",
+      "Regret is the antithesis of gratitude."
+    ],
+    "featured": true,
+    "faq": [
+      {
+        "question": "Is The Midnight Library a good book for self-reflection?",
+        "answer": "Absolutely. It's a deeply philosophical book that encourages readers to contemplate their life choices, regrets, and the what-ifs. It's an excellent choice for anyone looking for a thought-provoking read."
+      },
+      {
+        "question": "What genre is The Midnight Library?",
+        "answer": "It's primarily contemporary fiction with strong elements of fantasy and philosophical fiction. It blends a magical concept with relatable human emotions and struggles."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Project Hail Mary",
+    "authors": ["Andy Weir"],
+    "authorIds": [2],
+    "coverImage": "https://picsum.photos/400/600?random=2",
+    "review": "Ryland Grace is the sole survivor on a desperate, last-chance mission—and if he fails, humanity and the earth itself will perish. Except that right now, he doesn't know that. He can't even remember his own name, let alone the nature of his assignment or how to complete it. An irresistible interstellar adventure as only Andy Weir could deliver, Project Hail Mary is a tale of discovery, speculation, and survival to rival The Martian—while taking us to places it never dreamed of going.",
+    "purchaseUrls": {
+      "paperback": "#",
+      "audiobook": "#",
+      "ebook": "#"
+    },
+    "category": "Science Fiction",
+    "tags": ["Space", "Adventure", "Hard Sci-Fi"],
+    "quotes": [
+        "Humanity is a science experiment. All living things are.",
+        "Fist me!",
+        "When you're the only human being in a star system, you're the only one who can be responsible."
+    ],
+    "featured": true,
+    "faq": [
+      {
+        "question": "Do I need to be a science expert to enjoy Project Hail Mary?",
+        "answer": "Not at all! While the book is praised for its scientific accuracy, Andy Weir does an incredible job of explaining complex concepts in a simple and entertaining way. It's a story about problem-solving and friendship at its core."
+      },
+      {
+        "question": "Is Project Hail Mary similar to The Martian?",
+        "answer": "Yes, it shares a similar tone with a witty, problem-solving protagonist and a heavy reliance on science. However, many readers find that Project Hail Mary expands on these themes with a more complex plot and deeper emotional stakes."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Atomic Habits",
+    "authors": ["James Clear"],
+    "authorIds": [3],
+    "coverImage": "https://picsum.photos/400/600?random=3",
+    "review": "A supremely practical and useful book. James Clear distills the most fundamental information about habit formation, so you can accomplish more by focusing on less. Tiny changes, remarkable results. No matter your goals, Atomic Habits offers a proven framework for improving--every day. James Clear, one of the world's leading experts on habit formation, reveals practical strategies that will teach you exactly how to form good habits, break bad ones, and master the tiny behaviors that lead to remarkable results.",
+    "purchaseUrls": {
+      "paperback": "#",
+      "audiobook": "#"
+    },
+    "category": "Non-Fiction",
+    "tags": ["Self-Help", "Productivity", "Psychology"],
+    "quotes": [
+        "You do not rise to the level of your goals. You fall to the level of your systems.",
+        "Every action you take is a vote for the type of person you wish to become.",
+        "The most effective way to change your habits is to focus not on what you want to achieve, but on who you wish to become."
+    ],
+    "featured": false,
+    "faq": [
+      {
+        "question": "What makes Atomic Habits different from other productivity books?",
+        "answer": "Atomic Habits focuses on the power of small, incremental changes (1% improvements) rather than massive, overwhelming goals. It provides a practical four-step framework (Cue, Craving, Response, Reward) that is easy to understand and apply to real-life situations."
+      },
+      {
+        "question": "Who should read Atomic Habits?",
+        "answer": "Anyone looking to build better habits, break bad ones, or simply understand the psychology behind their daily actions. It's applicable to personal goals, professional development, health, and more."
+      }
+    ]
+  },
+    {
+    "id": 4,
+    "title": "The Silent Patient",
+    "authors": ["Alex Michaelides"],
+    "authorIds": [4],
+    "coverImage": "https://picsum.photos/400/600?random=4",
+    "review": "Alicia Berenson's life is seemingly perfect. A famous painter married to an in-demand fashion photographer, she lives in a grand house with big windows overlooking a park in one of London's most desirable areas. One evening her husband Gabriel returns home late from a fashion shoot, and Alicia shoots him five times in the face, and then never speaks another word. Alicia's refusal to talk, or give any kind of explanation, turns a domestic tragedy into something far grander, a mystery that captures the public imagination and casts Alicia into notoriety.",
+    "purchaseUrls": {
+      "paperback": "#"
+    },
+    "category": "Thriller",
+    "tags": ["Mystery", "Psychological", "Suspense"],
+    "quotes": [
+        "We are all crazy, I believe, just in different ways.",
+        "There’s so much pain in this world, and yet so much beauty. It's a contradiction. A paradox. And it's what makes life so perplexing."
+    ],
+    "featured": false,
+    "faq": [
+        {
+            "question": "Is The Silent Patient a fast-paced thriller?",
+            "answer": "It's more of a slow-burn psychological thriller. The suspense builds gradually through the narrative of the psychotherapist, Theo Faber, and the diary entries of Alicia Berenson, culminating in a shocking twist."
+        },
+        {
+            "question": "Why is this book so popular?",
+            "answer": "The book is renowned for its brilliant plot twist, which most readers do not see coming. The combination of a compelling mystery, unreliable narrators, and a deep dive into psychology makes it a memorable and widely discussed thriller."
+        }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Dune",
+    "authors": ["Frank Herbert"],
+    "authorIds": [5],
+    "coverImage": "https://picsum.photos/400/600?random=5",
+    "review": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the 'spice' melange, a drug capable of extending life and enhancing consciousness. Coveted across the known universe, melange is a prize worth killing for... When House Atreides is betrayed, the destruction of Paul's family will set the boy on a journey toward a destiny greater than he could ever have imagined. And as he evolves into the mysterious man known as Muad'Dib, he will bring to fruition humankind's most ancient and unattainable dream.",
+    "purchaseUrls": {
+      "paperback": "#",
+      "ebook": "#"
+    },
+    "category": "Science Fiction",
+    "tags": ["Classic", "Politics", "Epic"],
+    "quotes": [
+        "I must not fear. Fear is the mind-killer.",
+        "The mystery of life isn't a problem to solve, but a reality to experience.",
+        "What do you despise? By this are you truly known."
+    ],
+    "featured": true,
+     "faq": [
+        {
+            "question": "Is Dune difficult to read?",
+            "answer": "Dune can be challenging due to its complex world-building, intricate politics, and philosophical themes. However, it's also an incredibly immersive and rewarding experience for readers who enjoy epic-scale science fiction."
+        },
+        {
+            "question": "What are the main themes of Dune?",
+            "answer": "Dune explores a wide range of themes, including politics, religion, ecology, the dangers of charismatic leaders, and the nature of power. It's a dense and multi-layered novel that offers a lot to think about."
+        }
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Educated: A Memoir",
+    "authors": ["Tara Westover"],
+    "authorIds": [6],
+    "coverImage": "https://picsum.photos/400/600?random=6",
+    "review": "Tara Westover was 17 the first time she set foot in a classroom. Born to survivalists in the mountains of Idaho, she prepared for the end of the world by stockpiling home-canned peaches and sleeping with her 'head-for-the-hills bag'. In the summer she stewed herbs for her mother, a midwife and healer, and in the winter she salvaged in her father's junkyard. Her quest for knowledge transformed her, taking her over oceans and across continents, to Harvard and to Cambridge. Only then would she wonder if she'd traveled too far, if there was still a way home.",
+    "purchaseUrls": {
+      "paperback": "#",
+      "ebook": "#",
+      "audiobook": "#"
+    },
+    "category": "Non-Fiction",
+    "tags": ["Memoir", "Biography", "Education"],
+    "quotes": [
+        "The decisions I made after that moment were not the ones she would have made. They were the choices of a changed person, a new self.",
+        "You can love someone and still choose to say goodbye to them."
+    ],
+    "featured": true,
+    "faq": [
+        {
+            "question": "What is the main message of Educated?",
+            "answer": "Educated is a powerful memoir about the transformative power of knowledge. It explores themes of family loyalty, identity, and the struggle to define oneself outside the confines of one's upbringing."
+        },
+        {
+            "question": "Is Educated an inspiring story?",
+            "answer": "Yes, it's an incredibly inspiring, and at times harrowing, story. Tara Westover's journey from a scrapyard in Idaho to the halls of Cambridge University is a testament to her resilience, courage, and thirst for knowledge."
+        }
+    ]
+  }
+]

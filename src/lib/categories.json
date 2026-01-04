@@ -1,0 +1,27 @@
+
+[
+    {
+        "id": 1,
+        "name": "Fiction"
+    },
+    {
+        "id": 2,
+        "name": "Science Fiction"
+    },
+    {
+        "id": 3,
+        "name": "Non-Fiction"
+    },
+    {
+        "id": 4,
+        "name": "Thriller"
+    },
+    {
+        "id": 5,
+        "name": "Memoir"
+    },
+    {
+        "id": 6,
+        "name": "Fantasy"
+    }
+]

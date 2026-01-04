@@ -1,0 +1,15 @@
+
+[
+  {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@libribooks.com",
+    "role": "Admin"
+  },
+  {
+    "id": 2,
+    "name": "Editor User",
+    "email": "editor@libribooks.com",
+    "role": "Editor"
+  }
+]
