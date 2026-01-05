@@ -1,7 +1,7 @@
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import articles from '@/lib/articles.json';
+import { articleService } from '@/lib/services';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
@@ -14,51 +14,52 @@ import type { Article } from '@/lib/types';
 
 
 export async function generateStaticParams() {
-  return (articles as Article[]).map((article) => ({
+  const articles = await articleService.getAll();
+  return articles.map((article) => ({
     slug: article.slug,
   }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-    const article = (articles as Article[]).find((a) => a.slug === params.slug);
+  const article = await articleService.getBySlug(params.slug);
 
-    if (!article) {
-        return {};
-    }
+  if (!article) {
+    return {};
+  }
 
-    const pageUrl = `/articles/${article.slug}`;
-    const imageUrl = article.coverImage;
+  const pageUrl = `/articles/${article.slug}`;
+  const imageUrl = article.coverImage;
 
-    return {
-        title: article.title,
-        description: article.excerpt,
-        openGraph: {
-            title: article.title,
-            description: article.excerpt,
-            url: pageUrl,
-            type: 'article',
-            publishedTime: new Date(article.date).toISOString(),
-            authors: [article.author],
-            images: [
-                {
-                    url: imageUrl,
-                    width: 800,
-                    height: 400,
-                    alt: article.title,
-                },
-            ],
+  return {
+    title: article.title,
+    description: article.excerpt,
+    openGraph: {
+      title: article.title,
+      description: article.excerpt,
+      url: pageUrl,
+      type: 'article',
+      publishedTime: new Date(article.date).toISOString(),
+      authors: [article.author],
+      images: [
+        {
+          url: imageUrl,
+          width: 800,
+          height: 400,
+          alt: article.title,
         },
-        twitter: {
-            card: 'summary_large_image',
-            title: article.title,
-            description: article.excerpt,
-            images: [imageUrl],
-        },
-    };
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.excerpt,
+      images: [imageUrl],
+    },
+  };
 }
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = (articles as Article[]).find((a) => a.slug === params.slug);
+  const article = await articleService.getBySlug(params.slug);
 
   if (!article) {
     notFound();
@@ -66,7 +67,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
   return (
     <div className="flex flex-col min-h-screen">
-       <JsonLd<SchemaArticle>
+      <JsonLd<SchemaArticle>
         item={{
           '@context': 'https://schema.org',
           '@type': 'Article',
@@ -84,19 +85,19 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       <main className="flex-1 w-full py-12">
         <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative aspect-video w-full mb-8">
-             <Image
-                src={article.coverImage}
-                alt={article.title}
-                fill
-                className="object-cover rounded-lg"
-                sizes="(max-width: 1024px) 100vw, 896px"
-                data-ai-hint="article hero"
-                priority
-              />
+            <Image
+              src={article.coverImage}
+              alt={article.title}
+              fill
+              className="object-cover rounded-lg"
+              sizes="(max-width: 1024px) 100vw, 896px"
+              data-ai-hint="article hero"
+              priority
+            />
           </div>
 
           <h1 className="text-3xl md:text-4xl font-headline font-bold mb-4">{article.title}</h1>
-          
+
           <div className="flex items-center gap-6 text-sm text-muted-foreground mb-8">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -107,7 +108,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               <span>{format(new Date(article.date), 'MMMM d, yyyy')}</span>
             </div>
           </div>
-          
+
           <Separator className="mb-8" />
 
           <div

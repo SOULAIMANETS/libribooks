@@ -1,51 +1,49 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+    getPaginationRowModel,
+    SortingState,
+    getSortedRowModel,
+    ColumnFiltersState,
+    getFilteredRowModel,
 } from '@tanstack/react-table';
-import { MoreHorizontal, PlusCircle, Trash2, Star } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Star, Loader2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import booksData from '@/lib/data.json';
-import authorsData from '@/lib/authors.json';
+import { bookService, authorService } from '@/lib/services';
 import type { Book, Author } from '@/lib/types';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -53,13 +51,10 @@ import { BookForm } from '@/components/admin/BookForm';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-// NOTE: In a real app, you would fetch this data from a server and have write operations.
-// For this prototype, we'll manipulate the imported data in memory.
-let books: Book[] = booksData.map(book => ({...book}));
-let authors: Author[] = authorsData.map(author => ({...author}));
-
 export default function BooksDashboardPage() {
-    const [data, setData] = React.useState(books);
+    const [data, setData] = React.useState<Book[]>([]);
+    const [authors, setAuthors] = React.useState<Author[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [isAddBookOpen, setAddBookOpen] = React.useState(false);
@@ -67,83 +62,147 @@ export default function BooksDashboardPage() {
     const [deletingBook, setDeletingBook] = React.useState<Book | null>(null);
     const { toast } = useToast();
 
-    const deleteBook = (bookId: number) => {
-        setData(data.filter(book => book.id !== bookId));
+    const fetchData = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [booksData, authorsData] = await Promise.all([
+                bookService.getAll(),
+                authorService.getAll()
+            ]);
+            setData(booksData);
+            setAuthors(authorsData);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to fetch books and authors.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
+
+    React.useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const deleteBook = async (bookId: number) => {
+        try {
+            await bookService.delete(bookId);
+            setData(data.filter(book => book.id !== bookId));
+            toast({
+                title: 'Book deleted',
+                description: 'The book has been successfully removed.',
+            });
+        } catch (error) {
+            console.error('Error deleting book:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to delete the book.',
+                variant: 'destructive',
+            });
+        }
     };
 
-    const handleAuthorProcessing = (authorNames: string[]): { authors: string[], authorIds: number[] } => {
+    const handleAuthorProcessing = async (authorNames: string[]): Promise<number[]> => {
         const processedIds: number[] = [];
-        const processedNames: string[] = [];
-        let nextAuthorId = Math.max(...authors.map(a => a.id), 0) + 1;
+        let currentAuthors = [...authors];
 
-        authorNames.forEach(name => {
+        for (const name of authorNames) {
             const trimmedName = name.trim();
-            if (!trimmedName) return;
+            if (!trimmedName) continue;
 
-            let existingAuthor = authors.find(a => a.name.toLowerCase() === trimmedName.toLowerCase());
-            
+            let existingAuthor = currentAuthors.find(a => a.name.toLowerCase() === trimmedName.toLowerCase());
+
             if (existingAuthor) {
                 processedIds.push(existingAuthor.id);
-                processedNames.push(existingAuthor.name);
             } else {
-                const newAuthor: Author = {
-                    id: nextAuthorId,
-                    name: trimmedName,
-                    bio: `An up and coming author, ${trimmedName} is making waves in the literary world.`,
-                    image: `https://picsum.photos/400/400?random=${nextAuthorId}`
-                };
-                authors.push(newAuthor);
-                processedIds.push(newAuthor.id);
-                processedNames.push(newAuthor.name);
-                nextAuthorId++;
+                try {
+                    const newAuthor = await authorService.create({
+                        name: trimmedName,
+                        bio: `An up and coming author, ${trimmedName} is making waves in the literary world.`,
+                        image: `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000)}`
+                    });
+                    currentAuthors.push(newAuthor);
+                    processedIds.push(newAuthor.id);
+                    setAuthors([...currentAuthors]);
+                } catch (error) {
+                    console.error('Error creating author:', error);
+                }
             }
-        });
+        }
 
-        return { authors: processedNames, authorIds: processedIds };
+        return processedIds;
     };
 
-    const addBook = (book: any) => {
-      const authorNames = book.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
-      const { authors, authorIds } = handleAuthorProcessing(authorNames);
-      
-      const newBook: Book = { 
-        ...book, 
-        id: Math.max(...data.map(b => b.id), 0) + 1,
-        authors,
-        authorIds,
-      };
-      setData([newBook, ...data]);
-      books = [newBook, ...data];
-    };
-    
-    const updateBook = (updatedBook: any) => {
-      const authorNames = updatedBook.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
-      const { authors, authorIds } = handleAuthorProcessing(authorNames);
+    const addBook = async (book: any) => {
+        try {
+            const authorNames = book.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
+            const authorIds = await handleAuthorProcessing(authorNames);
 
-      const finalBook: Book = {
-        ...updatedBook,
-        authors,
-        authorIds,
-      };
+            await bookService.create({
+                ...book,
+                authorIds,
+                authors: authorNames
+            });
 
-      setData(data.map(book => (book.id === finalBook.id ? finalBook : book)));
-      books = data.map(book => (book.id === finalBook.id ? finalBook : book));
+            await fetchData();
+            setAddBookOpen(false);
+        } catch (error) {
+            console.error('Error adding book:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to add the book.',
+                variant: 'destructive',
+            });
+        }
     };
 
-    const toggleFeatured = (bookId: number) => {
-        const updatedData = data.map(book => {
-            if (book.id === bookId) {
-                const newFeaturedState = !book.featured;
-                toast({
-                    title: `Book ${newFeaturedState ? 'Featured' : 'Unfeatured'}`,
-                    description: `"${book.title}" has been ${newFeaturedState ? 'added to' : 'removed from'} featured books.`,
-                });
-                return { ...book, featured: newFeaturedState };
-            }
-            return book;
-        });
-        setData(updatedData);
-        books = updatedData;
+    const updateBook = async (updatedBook: any) => {
+        try {
+            const authorNames = updatedBook.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
+            const authorIds = await handleAuthorProcessing(authorNames);
+
+            await bookService.update(updatedBook.id, {
+                ...updatedBook,
+                authorIds,
+                authors: authorNames
+            });
+
+            await fetchData();
+            setEditingBook(null);
+        } catch (error) {
+            console.error('Error updating book:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update the book.',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const toggleFeatured = async (bookId: number, currentFeatured: boolean) => {
+        try {
+            await bookService.update(bookId, { featured: !currentFeatured });
+            const newFeaturedState = !currentFeatured;
+
+            setData(data.map(book =>
+                book.id === bookId ? { ...book, featured: newFeaturedState } : book
+            ));
+
+            toast({
+                title: `Book ${newFeaturedState ? 'Featured' : 'Unfeatured'}`,
+                description: `The book status has been updated.`,
+            });
+        } catch (error) {
+            console.error('Error toggling featured status:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update featured status.',
+                variant: 'destructive',
+            });
+        }
     }
 
     const columns: ColumnDef<Book>[] = [
@@ -161,7 +220,7 @@ export default function BooksDashboardPage() {
             header: 'Cover',
             cell: ({ row }) => (
                 <div className="relative h-16 w-12">
-                     <Image
+                    <Image
                         src={row.getValue('coverImage')}
                         alt={row.original.title}
                         fill
@@ -174,7 +233,7 @@ export default function BooksDashboardPage() {
         {
             accessorKey: 'title',
             header: ({ column }) => {
-                 return (
+                return (
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -191,7 +250,7 @@ export default function BooksDashboardPage() {
             accessorKey: 'authors',
             header: 'Author(s)',
             cell: ({ row }) => {
-                const authors = row.getValue('authors') as string[];
+                const authors = row.getValue('authors') as string[] || [];
                 return <p className="max-w-xs">{authors.join(', ')}</p>
             }
         },
@@ -217,32 +276,32 @@ export default function BooksDashboardPage() {
             cell: ({ row }) => {
                 const book = row.original;
                 return (
-                      <DropdownMenu>
+                    <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                           <DropdownMenuItem onClick={() => setEditingBook(book)}>
-                            Edit Book
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleFeatured(book.id)}>
-                            <Star className={cn("mr-2 h-4 w-4", book.featured && "text-yellow-400 fill-yellow-400")} />
-                            {book.featured ? 'Unfeature' : 'Feature'}
-                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive focus:text-destructive"
-                              onSelect={() => setDeletingBook(book)}
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setEditingBook(book)}>
+                                Edit Book
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toggleFeatured(book.id, !!book.featured)}>
+                                <Star className={cn("mr-2 h-4 w-4", book.featured && "text-yellow-400 fill-yellow-400")} />
+                                {book.featured ? 'Unfeature' : 'Feature'}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setDeletingBook(book)}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete Book
                             </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                    </DropdownMenu>
                 )
             },
         },
@@ -258,23 +317,32 @@ export default function BooksDashboardPage() {
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         state: {
-          sorting,
-          columnFilters,
+            sorting,
+            columnFilters,
         },
     });
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading books...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full">
             <div className="flex items-center justify-between py-4">
                 <Input
-                  placeholder="Filter by title..."
-                  value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
-                  onChange={(event) =>
-                    table.getColumn('title')?.setFilterValue(event.target.value)
-                  }
-                  className="max-w-sm"
+                    placeholder="Filter by title..."
+                    value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) =>
+                        table.getColumn('title')?.setFilterValue(event.target.value)
+                    }
+                    className="max-w-sm"
                 />
-                 <Dialog open={isAddBookOpen} onOpenChange={setAddBookOpen}>
+                <Dialog open={isAddBookOpen} onOpenChange={setAddBookOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => setAddBookOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add New Book
@@ -282,26 +350,26 @@ export default function BooksDashboardPage() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-2xl">
                         <DialogHeader>
-                        <DialogTitle>Add a New Book</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to add a new book to the library.
-                        </DialogDescription>
+                            <DialogTitle>Add a New Book</DialogTitle>
+                            <DialogDescription>
+                                Fill out the form below to add a new book to the library.
+                            </DialogDescription>
                         </DialogHeader>
-                        <BookForm 
-                          key="add-book-form"
-                          onSubmit={addBook} 
-                          onSuccess={() => setAddBookOpen(false)}
+                        <BookForm
+                            key="add-book-form"
+                            onSubmit={addBook}
+                            onSuccess={() => { }}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-             <Dialog open={!!editingBook} onOpenChange={(isOpen) => !isOpen && setEditingBook(null)}>
+            <Dialog open={!!editingBook} onOpenChange={(isOpen) => !isOpen && setEditingBook(null)}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                    <DialogTitle>Edit Book</DialogTitle>
-                    <DialogDescription>
-                        Update the details for "{editingBook?.title}".
-                    </DialogDescription>
+                        <DialogTitle>Edit Book</DialogTitle>
+                        <DialogDescription>
+                            Update the details for "{editingBook?.title}".
+                        </DialogDescription>
                     </DialogHeader>
                     {editingBook && (
                         <BookForm
@@ -310,18 +378,18 @@ export default function BooksDashboardPage() {
                             onSubmit={(bookData) => {
                                 updateBook({ ...bookData, id: editingBook.id });
                             }}
-                            onSuccess={() => setEditingBook(null)}
+                            onSuccess={() => { }}
                         />
                     )}
                 </DialogContent>
-             </Dialog>
-              <AlertDialog open={!!deletingBook} onOpenChange={(isOpen) => !isOpen && setDeletingBook(null)}>
+            </Dialog>
+            <AlertDialog open={!!deletingBook} onOpenChange={(isOpen) => !isOpen && setDeletingBook(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the book
-                        "{deletingBook?.title}" from the database.
+                            This action cannot be undone. This will permanently delete the book
+                            "{deletingBook?.title}" from the database.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -332,11 +400,11 @@ export default function BooksDashboardPage() {
                                 setDeletingBook(null)
                             }
                         }}>
-                        Continue
+                            Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-             </AlertDialog>
+            </AlertDialog>
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -347,9 +415,9 @@ export default function BooksDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>
@@ -400,5 +468,3 @@ export default function BooksDashboardPage() {
         </div>
     );
 }
-
-    

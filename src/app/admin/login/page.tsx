@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Book } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,39 +26,49 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // In a real app, you would have authentication logic here.
-    // For this prototype, we'll simulate a successful login.
-    setTimeout(() => {
-      // Dummy check
-      if (email === 'admin@libribooks.com' && password === 'password') {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: 'Login Failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
         toast({
           title: 'Login Successful',
           description: 'Welcome back!',
         });
         router.push('/admin/dashboard');
-      } else {
-        toast({
-          title: 'Login Failed',
-          description: 'Invalid email or password. Please try again.',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-            <Link href="/" className="flex items-center justify-center gap-2 text-3xl font-bold font-headline">
-                <Book className="h-8 w-8 text-primary" />
-                <span>libribooks.com</span>
-            </Link>
+          <Link href="/" className="flex items-center justify-center gap-2 text-3xl font-bold font-headline">
+            <Book className="h-8 w-8 text-primary" />
+            <span>libribooks.com</span>
+          </Link>
         </div>
         <Card>
           <CardHeader className="text-center">
@@ -99,9 +110,6 @@ export default function LoginPage() {
             </CardFooter>
           </form>
         </Card>
-         <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Use <strong>admin@libribooks.com</strong> and <strong>password</strong> to login.</p>
-         </div>
       </div>
     </div>
   );

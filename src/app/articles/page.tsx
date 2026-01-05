@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import articles from '@/lib/articles.json';
+import { articleService } from '@/lib/services';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -15,7 +15,8 @@ export const metadata: Metadata = {
   description: 'Explore our collection of articles on literature, reading habits, and the world of books.',
 };
 
-export default function ArticlesPage() {
+export default async function ArticlesPage() {
+  const articles = await articleService.getAll();
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -33,16 +34,16 @@ export default function ArticlesPage() {
           {articles.map((article) => (
             <Card key={article.slug} className="flex flex-col md:flex-row overflow-hidden">
               <div className="md:w-1/3">
-                 <div className="relative aspect-video w-full">
-                    <Image
-                      src={article.coverImage}
-                      alt={article.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                       data-ai-hint="article cover"
-                    />
-                 </div>
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={article.coverImage}
+                    alt={article.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    data-ai-hint="article cover"
+                  />
+                </div>
               </div>
               <div className="md:w-2/3 flex flex-col">
                 <CardHeader>
@@ -51,7 +52,7 @@ export default function ArticlesPage() {
                       {article.title}
                     </Link>
                   </CardTitle>
-                   <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground">
                     <span>By {article.author}</span> &middot; <span>{format(new Date(article.date), 'MMMM d, yyyy')}</span>
                   </div>
                 </CardHeader>

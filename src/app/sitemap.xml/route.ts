@@ -1,8 +1,4 @@
-
-import books from '@/lib/data.json';
-import articles from '@/lib/articles.json';
-import authors from '@/lib/authors.json';
-import type { Book, Article, Author } from '@/lib/types';
+import { bookService, articleService, authorService } from '@/lib/services';
 
 const URL = 'https://libribooks.com';
 
@@ -18,27 +14,33 @@ export async function GET() {
     '/cookie-policy',
   ];
 
-  const bookUrls = (books as Book[]).map(book => `/book/${book.id}`);
-  const articleUrls = (articles as Article[]).map(article => `/articles/${article.slug}`);
-  const authorUrls = (authors as Author[]).map(author => `/author/${author.id}`);
+  const [books, articles, authors] = await Promise.all([
+    bookService.getAll(),
+    articleService.getAll(),
+    authorService.getAll()
+  ]);
+
+  const bookUrls = books.map(book => `/book/${book.id}`);
+  const articleUrls = articles.map(article => `/articles/${article.slug}`);
+  const authorUrls = authors.map(author => `/author/${author.id}`);
 
   const allUrls = [...pages, ...bookUrls, ...articleUrls, ...authorUrls];
-  
+
   const today = new Date().toISOString().split('T')[0];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
       ${allUrls
-        .map((path) => {
-          return `
+      .map((path) => {
+        return `
             <url>
               <loc>${URL}${path}</loc>
               <lastmod>${today}</lastmod>
             </url>
           `;
-        })
-        .join('')}
-      ${(books as Book[]).map(book => `
+      })
+      .join('')}
+      ${books.map(book => `
         <url>
             <loc>${URL}/book/${book.id}</loc>
             <lastmod>${today}</lastmod>
@@ -49,7 +51,7 @@ export async function GET() {
             </image:image>
         </url>
       `).join('')}
-       ${(articles as Article[]).map(article => `
+       ${articles.map(article => `
         <url>
             <loc>${URL}/articles/${article.slug}</loc>
             <lastmod>${article.date}</lastmod>

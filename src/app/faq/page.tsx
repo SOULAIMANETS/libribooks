@@ -1,5 +1,3 @@
-
-
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import {
@@ -11,20 +9,20 @@ import {
 import { Metadata } from 'next';
 import { FAQPage as FAQPageSchema, Question } from 'schema-dts';
 import { JsonLd } from 'react-schemaorg';
-import pagesData from '@/lib/pages.json';
+import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
 
 export async function generateMetadata(): Promise<Metadata> {
-    const pageData = pagesData.find(p => p.slug === 'faq');
-    return {
-        title: pageData?.title || 'Frequently Asked Questions',
-        description: 'Find answers to common questions about libribooks.com, our review process, and how our site works.',
-    };
+  const pageData = await pageService.getBySlug('faq');
+  return {
+    title: pageData?.title || 'Frequently Asked Questions',
+    description: 'Find answers to common questions about libribooks.com, our review process, and how our site works.',
+  };
 };
 
-export default function FAQPage() {
-  const pageData = pagesData.find(p => p.slug === 'faq');
+export default async function FAQPage() {
+  const pageData = await pageService.getBySlug('faq');
 
   if (!pageData || !pageData.structuredContent) {
     notFound();
@@ -54,20 +52,20 @@ export default function FAQPage() {
           <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-foreground"
             dangerouslySetInnerHTML={{ __html: pageData.title }}
           />
-           <div 
-             className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground"
-             dangerouslySetInnerHTML={{ __html: pageData.content }}
-            />
+          <div
+            className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: pageData.content }}
+          />
         </div>
 
         <Accordion type="single" collapsible className="w-full">
           {faqItems.map((item, index) => (
-             <AccordionItem key={index} value={`item-${index + 1}`}>
-                <AccordionTrigger className="text-lg text-left">{item.question}</AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground leading-relaxed">
-                  {item.answer}
-                </AccordionContent>
-              </AccordionItem>
+            <AccordionItem key={index} value={`item-${index + 1}`}>
+              <AccordionTrigger className="text-lg text-left">{item.question}</AccordionTrigger>
+              <AccordionContent className="text-base text-muted-foreground leading-relaxed">
+                {item.answer}
+              </AccordionContent>
+            </AccordionItem>
           ))}
         </Accordion>
       </main>

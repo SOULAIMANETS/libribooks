@@ -16,7 +16,10 @@ import {
   Bookmark,
   Tag,
   MessageSquare,
+  LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 import {
   SidebarProvider,
@@ -31,6 +34,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +56,21 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Logout Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      router.push('/admin/login');
+    }
+  };
 
   const getPageTitle = (path: string) => {
     const segments = path.split('/').filter(Boolean);
@@ -68,8 +87,8 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2 p-2">
               <Button asChild variant="ghost" className="p-1 h-auto">
                 <Link href="/" className="flex items-center gap-2 text-xl font-bold font-headline">
-                    <Book className="h-7 w-7 text-primary" />
-                    <span className="group-data-[collapsible=icon]:hidden">libribooks</span>
+                  <Book className="h-7 w-7 text-primary" />
+                  <span className="group-data-[collapsible=icon]:hidden">libribooks</span>
                 </Link>
               </Button>
             </div>
@@ -94,31 +113,31 @@ export default function DashboardLayout({
           </SidebarContent>
           <SidebarFooter className="group-data-[collapsible=icon]:p-2">
             <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      asChild
-                      isActive={pathname === '/admin/dashboard/settings'}
-                      tooltip={{children: "Settings"}}
-                    >
-                      <Link href="/admin/dashboard/settings">
-                        <Settings />
-                        <span>Settings</span>
-                      </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/dashboard/settings'}
+                  tooltip={{ children: "Settings" }}
+                >
+                  <Link href="/admin/dashboard/settings">
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
 
         <SidebarInset>
-            <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6 sticky top-0 z-30">
-                <div className="flex items-center gap-2">
-                    <SidebarTrigger className="md:hidden" />
-                    <h1 className="text-lg font-semibold">{getPageTitle(pathname)}</h1>
-                </div>
-                <ThemeToggle />
-            </header>
-            <main className="flex-1 p-4 sm:p-6">{children}</main>
+          <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6 sticky top-0 z-30">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-lg font-semibold">{getPageTitle(pathname)}</h1>
+            </div>
+            <ThemeToggle />
+          </header>
+          <main className="flex-1 p-4 sm:p-6">{children}</main>
         </SidebarInset>
 
       </div>

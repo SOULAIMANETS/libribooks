@@ -2,8 +2,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import books from '@/lib/data.json';
-import authors from '@/lib/authors.json';
+import { bookService, authorService } from '@/lib/services';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -22,13 +21,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 
 export async function generateStaticParams() {
-  return (books as Book[]).map((book) => ({
+  const books = await bookService.getAll();
+  return books.map((book) => ({
     id: book.id.toString(),
   }));
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const book = (books as Book[]).find((b) => b.id.toString() === params.id);
+  const book = await bookService.getById(params.id);
 
   if (!book) {
     return {};
@@ -66,15 +66,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 
 export default async function BookDetailPage({ params }: { params: { id: string } }) {
-  const book = (books as Book[]).find((b) => b.id.toString() === params.id);
+  const book = await bookService.getById(params.id);
 
   if (!book) {
     notFound();
   }
-  
-  const bookAuthors = (authors as Author[]).filter((a) => book.authorIds.includes(a.id));
 
-  const similarBooks = (books as Book[]).filter(
+  const allAuthors = await authorService.getAll();
+  const bookAuthors = allAuthors.filter((a) => book.authorIds.includes(a.id));
+
+  const allBooks = await bookService.getAll();
+  const similarBooks = allBooks.filter(
     (b) => b.category === book.category && b.id !== book.id
   ).slice(0, 3);
 
@@ -85,13 +87,13 @@ export default async function BookDetailPage({ params }: { params: { id: string 
     name: author.name,
     url: `https://libribooks.com/author/${author.id}`,
   }));
-  
+
   const schemaFaqs: Question[] = book.faq?.map(item => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.answer,
+      '@type': 'Answer',
+      text: item.answer,
     },
   })) || [];
 
@@ -117,13 +119,13 @@ export default async function BookDetailPage({ params }: { params: { id: string 
         }}
       />
       {schemaFaqs.length > 0 && (
-         <JsonLd<FAQPage>
-            item={{
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              mainEntity: schemaFaqs,
-            }}
-          />
+        <JsonLd<FAQPage>
+          item={{
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: schemaFaqs,
+          }}
+        />
       )}
       <Header />
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -145,15 +147,15 @@ export default async function BookDetailPage({ params }: { params: { id: string 
             <Badge variant="secondary" className="mb-2">{book.category}</Badge>
             <h1 className="text-4xl font-headline font-bold">{book.title}</h1>
             <div className="mt-2 text-xl text-muted-foreground flex items-center gap-2">
-                by{' '}
-                {book.authors.map((author, index) => (
-                    <React.Fragment key={book.authorIds[index]}>
-                        <Link href={`/author/${book.authorIds[index]}`} className="text-primary hover:underline">
-                            {author}
-                        </Link>
-                        {index < book.authors.length - 1 && <span>,</span>}
-                    </React.Fragment>
-                ))}
+              by{' '}
+              {book.authors.map((author, index) => (
+                <React.Fragment key={book.authorIds[index]}>
+                  <Link href={`/author/${book.authorIds[index]}`} className="text-primary hover:underline">
+                    {author}
+                  </Link>
+                  {index < book.authors.length - 1 && <span>,</span>}
+                </React.Fragment>
+              ))}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap mt-4">
@@ -164,28 +166,28 @@ export default async function BookDetailPage({ params }: { params: { id: string 
                 </Badge>
               ))}
             </div>
-            
+
             <div className="flex items-center gap-4 mt-8 flex-wrap">
               {book.purchaseUrls?.paperback && (
-                 <Button asChild className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
-                    <a href={book.purchaseUrls.paperback} target="_blank" rel="noopener noreferrer">
-                      <BookIcon /> Buy Paperback
-                    </a>
-                  </Button>
+                <Button asChild className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90">
+                  <a href={book.purchaseUrls.paperback} target="_blank" rel="noopener noreferrer">
+                    <BookIcon /> Buy Paperback
+                  </a>
+                </Button>
               )}
-               {book.purchaseUrls?.ebook && (
-                 <Button asChild className="w-full sm:w-auto" variant="outline">
-                    <a href={book.purchaseUrls.ebook} target="_blank" rel="noopener noreferrer">
-                      <FileText /> Buy E-book
-                    </a>
-                  </Button>
+              {book.purchaseUrls?.ebook && (
+                <Button asChild className="w-full sm:w-auto" variant="outline">
+                  <a href={book.purchaseUrls.ebook} target="_blank" rel="noopener noreferrer">
+                    <FileText /> Buy E-book
+                  </a>
+                </Button>
               )}
-               {book.purchaseUrls?.audiobook && (
-                 <Button asChild className="w-full sm:w-auto" variant="outline">
-                    <a href={book.purchaseUrls.audiobook} target="_blank" rel="noopener noreferrer">
-                      <Mic /> Buy Audiobook
-                    </a>
-                  </Button>
+              {book.purchaseUrls?.audiobook && (
+                <Button asChild className="w-full sm:w-auto" variant="outline">
+                  <a href={book.purchaseUrls.audiobook} target="_blank" rel="noopener noreferrer">
+                    <Mic /> Buy Audiobook
+                  </a>
+                </Button>
               )}
               <SocialShareButtons url={pageUrl} title={book.title} />
             </div>
@@ -197,7 +199,7 @@ export default async function BookDetailPage({ params }: { params: { id: string 
 
         <div>
           <h2 className="text-2xl font-headline font-bold mb-4 flex items-center gap-2">
-            <BookOpen className="w-6 h-6"/>
+            <BookOpen className="w-6 h-6" />
             Why '{book.title}' is a Must-Read
           </h2>
           <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">{book.review}</p>
@@ -216,29 +218,29 @@ export default async function BookDetailPage({ params }: { params: { id: string 
             </div>
           </>
         )}
-        
+
         {book.faq && book.faq.length > 0 && (
           <>
             <Separator className="my-12" />
             <div>
               <h2 className="text-2xl font-headline font-bold mb-4">Frequently Asked Questions</h2>
-               <Accordion type="single" collapsible className="w-full">
-                  {book.faq.map((item, index) => (
-                     <AccordionItem key={index} value={`item-${index + 1}`}>
-                        <AccordionTrigger className="text-lg text-left">{item.question}</AccordionTrigger>
-                        <AccordionContent className="text-base text-muted-foreground leading-relaxed">
-                          {item.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-                  ))}
-                </Accordion>
+              <Accordion type="single" collapsible className="w-full">
+                {book.faq.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index + 1}`}>
+                    <AccordionTrigger className="text-lg text-left">{item.question}</AccordionTrigger>
+                    <AccordionContent className="text-base text-muted-foreground leading-relaxed">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </>
         )}
 
 
         {similarBooks.length > 0 && (
-           <>
+          <>
             <Separator className="my-12" />
             <div>
               <h2 className="text-2xl font-headline font-bold mb-4">Similar Books to Read Next</h2>
@@ -248,7 +250,7 @@ export default async function BookDetailPage({ params }: { params: { id: string 
                 ))}
               </div>
             </div>
-           </>
+          </>
         )}
       </main>
       <Footer />

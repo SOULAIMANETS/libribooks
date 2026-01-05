@@ -9,6 +9,7 @@ import { JsonLd } from 'react-schemaorg';
 import { WebSite } from 'schema-dts';
 import { appearanceSettings } from '@/lib/siteConfig';
 import { PopupContainer } from '@/components/PopupContainer';
+import { popupAdService } from '@/lib/services';
 
 const siteConfig = {
   name: 'libribooks.com',
@@ -105,27 +106,29 @@ const headlineFont = fontMapper[appearanceSettings.headlineFont as keyof typeof 
 const bodyFont = fontMapper[appearanceSettings.bodyFont as keyof typeof fontMapper];
 
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const activeAds = await popupAdService.getActive();
+
   return (
     <html lang="en" suppressHydrationWarning className={cn(headlineFont.variable, bodyFont.variable)}>
       <head>
         <JsonLd<WebSite>
-            item={{
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: siteConfig.name,
-              url: siteConfig.url,
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: `${siteConfig.url}/?q={search_term_string}`,
-                'query-input': 'required name=search_term_string',
-              },
-            }}
-          />
+          item={{
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: siteConfig.name,
+            url: siteConfig.url,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${siteConfig.url}/?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          }}
+        />
       </head>
       <body className={cn('font-body antialiased min-h-screen flex flex-col')}>
         <ThemeProvider
@@ -136,7 +139,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
-          <PopupContainer />
+          <PopupContainer initialAds={activeAds} />
         </ThemeProvider>
       </body>
     </html>

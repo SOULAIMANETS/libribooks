@@ -1,45 +1,74 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
 } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Loader2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import pagesData from '@/lib/pages.json';
+import { pageService } from '@/lib/services';
 import type { Page } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageForm } from '@/components/admin/PageForm';
-
-// NOTE: In a real app, you would fetch this data from a server and have write operations.
-// For this prototype, we'll manipulate the imported data in memory.
-const pages = pagesData.map(page => ({...page}));
+import { useToast } from '@/hooks/use-toast';
 
 export default function PagesDashboardPage() {
-    const [data, setData] = React.useState(pages);
+    const [data, setData] = React.useState<Page[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [editingPage, setEditingPage] = React.useState<Page | null>(null);
+    const { toast } = useToast();
 
-    const updatePage = (updatedPage: Page) => {
-        setData(data.map(page => (page.slug === updatedPage.slug ? updatedPage : page)));
+    const fetchPages = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const pages = await pageService.getAll();
+            setData(pages);
+        } catch (error) {
+            console.error('Error fetching pages:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        fetchPages();
+    }, [fetchPages]);
+
+    const updatePage = async (updatedPage: Page) => {
+        try {
+            await pageService.update(updatedPage.slug, updatedPage);
+            await fetchPages();
+            setEditingPage(null);
+            toast({
+                title: "Page Updated",
+                description: "The page content has been successfully updated.",
+            });
+        } catch (error) {
+            console.error('Error updating page:', error);
+            toast({
+                title: "Error",
+                description: "Failed to update page.",
+                variant: "destructive",
+            });
+        }
     };
 
     const columns: ColumnDef<Page>[] = [
@@ -51,9 +80,9 @@ export default function PagesDashboardPage() {
             ),
         },
         {
-          accessorKey: 'slug',
-          header: 'Path',
-           cell: ({ row }) => (
+            accessorKey: 'slug',
+            header: 'Path',
+            cell: ({ row }) => (
                 <div className="font-mono text-sm text-muted-foreground">/{row.getValue('slug')}</div>
             ),
         },
@@ -62,20 +91,20 @@ export default function PagesDashboardPage() {
             cell: ({ row }) => {
                 const page = row.original;
                 return (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setEditingPage(page)}>
-                        Edit Page Content
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setEditingPage(page)}>
+                                Edit Page Content
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 )
             },
         },
@@ -87,27 +116,36 @@ export default function PagesDashboardPage() {
         getCoreRowModel: getCoreRowModel(),
     });
 
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading pages...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full">
             <Dialog open={!!editingPage} onOpenChange={(isOpen) => !isOpen && setEditingPage(null)}>
-              <DialogContent className="sm:max-w-4xl">
-                  <DialogHeader>
-                  <DialogTitle>Edit Page</DialogTitle>
-                  <DialogDescription>
-                      Update the content for the "{editingPage?.title}" page.
-                  </DialogDescription>
-                  </DialogHeader>
-                  {editingPage && (
-                      <PageForm
-                          key={editingPage.slug}
-                          initialData={editingPage}
-                          onSubmit={(pageData) => {
-                              updatePage({ ...pageData, slug: editingPage.slug });
-                          }}
-                          onSuccess={() => setEditingPage(null)}
-                      />
-                  )}
-              </DialogContent>
+                <DialogContent className="sm:max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Page</DialogTitle>
+                        <DialogDescription>
+                            Update the content for the "{editingPage?.title}" page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editingPage && (
+                        <PageForm
+                            key={editingPage.slug}
+                            initialData={editingPage}
+                            onSubmit={(pageData) => {
+                                updatePage({ ...pageData, slug: editingPage.slug });
+                            }}
+                            onSuccess={() => { }}
+                        />
+                    )}
+                </DialogContent>
             </Dialog>
             <div className="rounded-md border">
                 <Table>
@@ -119,9 +157,9 @@ export default function PagesDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>

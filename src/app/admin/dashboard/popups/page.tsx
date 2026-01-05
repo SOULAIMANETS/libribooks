@@ -1,97 +1,144 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
 } from '@tanstack/react-table';
-import { MoreHorizontal, PlusCircle, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import popupAdsData from '@/lib/popupAds.json';
+import { popupAdService } from '@/lib/services';
 import type { PopupAd } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PopupAdForm } from '@/components/admin/PopupAdForm';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
-// NOTE: In a real app, you would fetch this data from a server and have write operations.
-// For this prototype, we'll manipulate the imported data in memory.
-const popups = popupAdsData.map(popup => ({...popup}));
-
 export default function PopupsDashboardPage() {
-    const [data, setData] = React.useState<PopupAd[]>(popups);
+    const [data, setData] = React.useState<PopupAd[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [isAddPopupOpen, setAddPopupOpen] = React.useState(false);
     const [editingPopup, setEditingPopup] = React.useState<PopupAd | null>(null);
     const [deletingPopup, setDeletingPopup] = React.useState<PopupAd | null>(null);
     const { toast } = useToast();
 
-    const deletePopup = (popupId: number) => {
-        setData(data.filter(popup => popup.id !== popupId));
-    };
-
-    const addPopup = (popup: Omit<PopupAd, 'id'>) => {
-        const newPopup = { ...popup, id: Math.max(...data.map(p => p.id), 0) + 1 };
-        if (newPopup.isActive) {
-            setData([newPopup, ...data.map(p => ({...p, isActive: false}))]);
-        } else {
-            setData([newPopup, ...data]);
+    const fetchPopups = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const popups = await popupAdService.getAll();
+            setData(popups);
+        } catch (error) {
+            console.error('Error fetching popups:', error);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, []);
 
-    const updatePopup = (updatedPopup: PopupAd) => {
-        if (updatedPopup.isActive) {
-            setData(data.map(popup => (popup.id === updatedPopup.id ? updatedPopup : {...popup, isActive: false})));
-        } else {
-             setData(data.map(popup => (popup.id === updatedPopup.id ? updatedPopup : popup)));
-        }
-    };
+    React.useEffect(() => {
+        fetchPopups();
+    }, [fetchPopups]);
 
-    const toggleActive = (popupId: number) => {
-        const popupToActivate = data.find(p => p.id === popupId);
-        if (!popupToActivate) return;
-
-        const isActivating = !popupToActivate.isActive;
-        if (isActivating) {
-            setData(data.map(p => p.id === popupId ? {...p, isActive: true} : {...p, isActive: false}));
-             toast({
-                title: "Popup Activated",
-                description: `"${popupToActivate.name}" is now the active popup.`,
+    const deletePopup = async (popupId: number) => {
+        try {
+            await popupAdService.delete(popupId);
+            await fetchPopups();
+            toast({
+                title: "Popup Deleted",
+                description: "The popup has been successfully removed.",
             });
-        } else {
-            // Deactivating
-             setData(data.map(p => p.id === popupId ? {...p, isActive: false} : p));
-             toast({
-                title: "Popup Deactivated",
-                description: `"${popupToActivate.name}" is no longer active.`,
+        } catch (error) {
+            console.error('Error deleting popup:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete popup.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const addPopup = async (popup: Omit<PopupAd, 'id'>) => {
+        try {
+            await popupAdService.create(popup);
+            await fetchPopups();
+            setAddPopupOpen(false);
+            toast({
+                title: "Popup Added",
+                description: "The new popup has been successfully created.",
+            });
+        } catch (error) {
+            console.error('Error adding popup:', error);
+            toast({
+                title: "Error",
+                description: "Failed to add popup.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const updatePopup = async (updatedPopup: PopupAd) => {
+        try {
+            await popupAdService.update(updatedPopup.id, updatedPopup);
+            await fetchPopups();
+            setEditingPopup(null);
+            toast({
+                title: "Popup Updated",
+                description: "The popup details have been successfully updated.",
+            });
+        } catch (error) {
+            console.error('Error updating popup:', error);
+            toast({
+                title: "Error",
+                description: "Failed to update popup.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const toggleActive = async (popupId: number) => {
+        const popup = data.find(p => p.id === popupId);
+        if (!popup) return;
+
+        try {
+            await popupAdService.update(popupId, { isActive: !popup.isActive });
+            await fetchPopups();
+            toast({
+                title: `Popup ${!popup.isActive ? 'Activated' : 'Deactivated'}`,
+                description: `"${popup.name}" status has been updated.`,
+            });
+        } catch (error) {
+            console.error('Error toggling popup status:', error);
+            toast({
+                title: "Error",
+                description: "Failed to toggle popup status.",
+                variant: "destructive",
             });
         }
     };
@@ -111,7 +158,7 @@ export default function PopupsDashboardPage() {
             cell: ({ row }) => {
                 const isActive = row.getValue('isActive');
                 return (
-                     <Badge variant={isActive ? 'default' : 'secondary'}>
+                    <Badge variant={isActive ? 'default' : 'secondary'}>
                         {isActive ? <CheckCircle className="mr-2 h-4 w-4" /> : <XCircle className="mr-2 h-4 w-4" />}
                         {isActive ? 'Active' : 'Inactive'}
                     </Badge>
@@ -121,7 +168,7 @@ export default function PopupsDashboardPage() {
         {
             accessorKey: 'displayDelay',
             header: 'Delay (s)',
-             cell: ({ row }) => `${row.getValue('displayDelay')}s`,
+            cell: ({ row }) => `${row.getValue('displayDelay')}s`,
         },
         {
             accessorKey: 'displayDuration',
@@ -136,20 +183,20 @@ export default function PopupsDashboardPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => toggleActive(popup.id)}>
-                            {popup.isActive ? 'Deactivate' : 'Activate'}
+                                {popup.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setEditingPopup(popup)}>
-                            Edit Popup
+                                Edit Popup
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onSelect={() => setDeletingPopup(popup)}
                             >
@@ -169,10 +216,19 @@ export default function PopupsDashboardPage() {
         getCoreRowModel: getCoreRowModel(),
     });
 
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading popups...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-end py-4">
-                 <Dialog open={isAddPopupOpen} onOpenChange={setAddPopupOpen}>
+                <Dialog open={isAddPopupOpen} onOpenChange={setAddPopupOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => setAddPopupOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add New Popup
@@ -180,26 +236,26 @@ export default function PopupsDashboardPage() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-2xl">
                         <DialogHeader>
-                        <DialogTitle>Add a New Popup Ad</DialogTitle>
-                        <DialogDescription>
-                           Fill out the form below to create a new popup.
-                        </DialogDescription>
+                            <DialogTitle>Add a New Popup Ad</DialogTitle>
+                            <DialogDescription>
+                                Fill out the form below to create a new popup.
+                            </DialogDescription>
                         </DialogHeader>
                         <PopupAdForm
-                          key="add-popup-form"
-                          onSubmit={addPopup}
-                          onSuccess={() => setAddPopupOpen(false)}
+                            key="add-popup-form"
+                            onSubmit={addPopup}
+                            onSuccess={() => { }}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-             <Dialog open={!!editingPopup} onOpenChange={(isOpen) => !isOpen && setEditingPopup(null)}>
+            <Dialog open={!!editingPopup} onOpenChange={(isOpen) => !isOpen && setEditingPopup(null)}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                    <DialogTitle>Edit Popup Ad</DialogTitle>
-                    <DialogDescription>
-                        Update the details for "{editingPopup?.name}".
-                    </DialogDescription>
+                        <DialogTitle>Edit Popup Ad</DialogTitle>
+                        <DialogDescription>
+                            Update the details for "{editingPopup?.name}".
+                        </DialogDescription>
                     </DialogHeader>
                     {editingPopup && (
                         <PopupAdForm
@@ -208,29 +264,29 @@ export default function PopupsDashboardPage() {
                             onSubmit={(popupData) => {
                                 updatePopup({ ...popupData, id: editingPopup.id });
                             }}
-                            onSuccess={() => setEditingPopup(null)}
+                            onSuccess={() => { }}
                         />
                     )}
                 </DialogContent>
-             </Dialog>
+            </Dialog>
             <AlertDialog open={!!deletingPopup} onOpenChange={(isOpen) => !isOpen && setDeletingPopup(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the popup
-                        "{deletingPopup?.name}".
+                            This action cannot be undone. This will permanently delete the popup
+                            "{deletingPopup?.name}".
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setDeletingPopup(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => {
-                            if(deletingPopup) {
+                            if (deletingPopup) {
                                 deletePopup(deletingPopup.id);
                                 setDeletingPopup(null);
                             }
                         }}>
-                        Continue
+                            Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -245,9 +301,9 @@ export default function PopupsDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>

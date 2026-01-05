@@ -1,76 +1,126 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
 } from '@tanstack/react-table';
-import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Loader2, User as UserIcon } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from '@/components/ui/input';
-import usersData from '@/lib/users.json';
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { userService } from '@/lib/services';
 import type { User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UserForm } from '@/components/admin/UserForm';
 import { Badge } from '@/components/ui/badge';
-
-// NOTE: In a real app, you would fetch this data from a server and have write operations.
-// For this prototype, we'll manipulate the imported data in memory.
-const users = usersData.map(user => ({...user}));
+import { useToast } from '@/hooks/use-toast';
 
 export default function UsersDashboardPage() {
-    const [data, setData] = React.useState(users);
-    const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+    const [data, setData] = React.useState<User[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [isAddUserOpen, setAddUserOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
     const [deletingUser, setDeletingUser] = React.useState<User | null>(null);
+    const { toast } = useToast();
 
-    const deleteUser = (userId: number) => {
-        setData(data.filter(user => user.id !== userId));
+    const fetchUsers = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const users = await userService.getAll();
+            setData(users);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
+    const deleteUser = async (userId: number) => {
+        try {
+            await userService.delete(userId);
+            await fetchUsers();
+            toast({
+                title: "User Deleted",
+                description: "The user has been successfully removed.",
+            });
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete user.",
+                variant: "destructive",
+            });
+        }
     };
 
-    const addUser = (user: Omit<User, 'id'>) => {
-      const newUser = { ...user, id: Math.max(...data.map(a => a.id), 0) + 1 };
-      setData([newUser, ...data]);
+    const addUser = async (userData: any) => {
+        try {
+            await userService.create(userData);
+            await fetchUsers();
+            setAddUserOpen(false);
+            toast({
+                title: "User Added",
+                description: "The new user has been successfully created.",
+            });
+        } catch (error) {
+            console.error('Error adding user:', error);
+            toast({
+                title: "Error",
+                description: "Failed to add user.",
+                variant: "destructive",
+            });
+        }
     };
 
-    const updateUser = (updatedUser: User) => {
-        setData(data.map(user => (user.id === updatedUser.id ? updatedUser : user)));
+    const updateUser = async (updatedData: any) => {
+        if (!editingUser) return;
+        try {
+            await userService.update(editingUser.id, updatedData);
+            await fetchUsers();
+            setEditingUser(null);
+            toast({
+                title: "User Updated",
+                description: "The user details have been successfully updated.",
+            });
+        } catch (error) {
+            console.error('Error updating user:', error);
+            toast({
+                title: "Error",
+                description: "Failed to update user.",
+                variant: "destructive",
+            });
+        }
     };
 
     const columns: ColumnDef<User>[] = [
@@ -78,7 +128,12 @@ export default function UsersDashboardPage() {
             accessorKey: 'name',
             header: 'Name',
             cell: ({ row }) => (
-                <div className="font-medium">{row.getValue('name')}</div>
+                <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <UserIcon className="h-4 w-4" />
+                    </div>
+                    <div className="font-medium">{row.getValue('name')}</div>
+                </div>
             ),
         },
         {
@@ -90,7 +145,11 @@ export default function UsersDashboardPage() {
             header: 'Role',
             cell: ({ row }) => {
                 const role = row.getValue('role') as string;
-                return <Badge variant={role === 'Admin' ? 'default' : 'secondary'}>{role}</Badge>
+                return (
+                    <Badge variant={role === 'Admin' ? 'default' : 'secondary'}>
+                        {role}
+                    </Badge>
+                );
             }
         },
         {
@@ -101,8 +160,8 @@ export default function UsersDashboardPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -111,9 +170,8 @@ export default function UsersDashboardPage() {
                                 Edit User
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                                className="text-destructive focus:text-destructive" 
-                                disabled={user.role === 'Admin'}
+                            <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
                                 onSelect={() => setDeletingUser(user)}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -126,97 +184,83 @@ export default function UsersDashboardPage() {
         },
     ];
 
-
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        state: {
-          sorting,
-          columnFilters,
-        },
     });
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading users...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between py-4">
-                <Input
-                  placeholder="Filter by name..."
-                  value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-                  onChange={(event) =>
-                    table.getColumn('name')?.setFilterValue(event.target.value)
-                  }
-                  className="max-w-sm"
-                />
+            <div className="flex items-center justify-end py-4">
                 <Dialog open={isAddUserOpen} onOpenChange={setAddUserOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => setAddUserOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add New User
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-lg">
+                    <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                        <DialogTitle>Add a New User</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to add a new user.
-                        </DialogDescription>
+                            <DialogTitle>Add a New Admin User</DialogTitle>
+                            <DialogDescription>
+                                Create a new account for libribooks.com administration.
+                            </DialogDescription>
                         </DialogHeader>
-                        <UserForm 
-                          key="add-user-form"
-                          onSubmit={addUser} 
-                          onSuccess={() => setAddUserOpen(false)}
+                        <UserForm
+                            onSubmit={addUser}
+                            onSuccess={() => { }}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-             <Dialog open={!!editingUser} onOpenChange={(isOpen) => !isOpen && setEditingUser(null)}>
-                <DialogContent className="sm:max-w-lg">
+            <Dialog open={!!editingUser} onOpenChange={(isOpen) => !isOpen && setEditingUser(null)}>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                    <DialogTitle>Edit User</DialogTitle>
-                    <DialogDescription>
-                        Update the details for "{editingUser?.name}".
-                    </DialogDescription>
+                        <DialogTitle>Edit User</DialogTitle>
+                        <DialogDescription>
+                            Update the details for "{editingUser?.name}".
+                        </DialogDescription>
                     </DialogHeader>
                     {editingUser && (
                         <UserForm
-                            key={editingUser.id}
                             initialData={editingUser}
-                            onSubmit={(userData) => {
-                                updateUser({ ...userData, id: editingUser.id });
-                            }}
-                            onSuccess={() => setEditingUser(null)}
+                            onSubmit={updateUser}
+                            onSuccess={() => { }}
                         />
                     )}
                 </DialogContent>
-             </Dialog>
+            </Dialog>
             <AlertDialog open={!!deletingUser} onOpenChange={(isOpen) => !isOpen && setDeletingUser(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the user
-                        "{deletingUser?.name}".
+                            This action cannot be undone. This will permanently delete the user account for
+                            "{deletingUser?.name}".
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setDeletingUser(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => {
-                            if(deletingUser) {
+                            if (deletingUser) {
                                 deleteUser(deletingUser.id);
                                 setDeletingUser(null);
                             }
                         }}>
-                        Continue
+                            Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -227,9 +271,9 @@ export default function UsersDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>
@@ -252,30 +296,12 @@ export default function UsersDashboardPage() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No results.
+                                    No users found.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
-            </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    Previous
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    Next
-                </Button>
             </div>
         </div>
     );

@@ -1,8 +1,7 @@
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import authors from '@/lib/authors.json';
-import books from '@/lib/data.json';
+import { authorService, bookService } from '@/lib/services';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
@@ -15,57 +14,58 @@ import type { Author, Book as BookType } from '@/lib/types';
 
 
 export async function generateStaticParams() {
-  return (authors as Author[]).map((author) => ({
+  const authors = await authorService.getAll();
+  return authors.map((author) => ({
     id: author.id.toString(),
   }));
 }
 
-export async function generateMetadata({ params }: { params: { id:string } }): Promise<Metadata> {
-    const author = (authors as Author[]).find((a) => a.id.toString() === params.id);
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const author = await authorService.getById(params.id);
 
-    if (!author) {
-        return {};
-    }
+  if (!author) {
+    return {};
+  }
 
-    const pageUrl = `/author/${author.id}`;
-    const imageUrl = author.image;
+  const pageUrl = `/author/${author.id}`;
+  const imageUrl = author.image;
 
-    return {
-        title: author.name,
-        description: author.bio.substring(0, 160),
-        openGraph: {
-            title: author.name,
-            description: author.bio.substring(0, 160),
-            url: pageUrl,
-            type: 'profile',
-            images: [
-                {
-                    url: imageUrl,
-                    width: 400,
-                    height: 400,
-                    alt: author.name,
-                },
-            ],
+  return {
+    title: author.name,
+    description: author.bio.substring(0, 160),
+    openGraph: {
+      title: author.name,
+      description: author.bio.substring(0, 160),
+      url: pageUrl,
+      type: 'profile',
+      images: [
+        {
+          url: imageUrl,
+          width: 400,
+          height: 400,
+          alt: author.name,
         },
-        twitter: {
-            card: 'summary',
-            title: author.name,
-            description: author.bio.substring(0, 160),
-            images: [imageUrl],
-        },
-    };
+      ],
+    },
+    twitter: {
+      card: 'summary',
+      title: author.name,
+      description: author.bio.substring(0, 160),
+      images: [imageUrl],
+    },
+  };
 }
 
 
 export default async function AuthorPage({ params }: { params: { id: string } }) {
-  const authorId = parseInt(params.id, 10);
-  const author = (authors as Author[]).find((a) => a.id === authorId);
+  const author = await authorService.getById(params.id);
 
   if (!author) {
     notFound();
   }
 
-  const authorBooks = (books as BookType[]).filter((b) => b.authorIds.includes(author.id));
+  const allBooks = await bookService.getAll();
+  const authorBooks = allBooks.filter((b) => b.authorIds.includes(author.id));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -82,27 +82,27 @@ export default async function AuthorPage({ params }: { params: { id: string } })
       <Header />
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-            <div className="md:col-span-1 flex flex-col items-center">
-                 <div className="relative w-48 h-48 md:w-60 md:h-60">
-                    <Image
-                      src={author.image}
-                      alt={author.name}
-                      fill
-                      className="rounded-full object-cover shadow-2xl"
-                      sizes="(max-width: 768px) 192px, 240px"
-                      data-ai-hint="author portrait"
-                    />
-                </div>
+          <div className="md:col-span-1 flex flex-col items-center">
+            <div className="relative w-48 h-48 md:w-60 md:h-60">
+              <Image
+                src={author.image}
+                alt={author.name}
+                fill
+                className="rounded-full object-cover shadow-2xl"
+                sizes="(max-width: 768px) 192px, 240px"
+                data-ai-hint="author portrait"
+              />
             </div>
-            <div className="md:col-span-2">
-                <h1 className="text-4xl font-headline font-bold flex items-center gap-3">
-                    <User className="w-10 h-10 text-primary" />
-                    {author.name}
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-                    {author.bio}
-                </p>
-            </div>
+          </div>
+          <div className="md:col-span-2">
+            <h1 className="text-4xl font-headline font-bold flex items-center gap-3">
+              <User className="w-10 h-10 text-primary" />
+              {author.name}
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+              {author.bio}
+            </p>
+          </div>
         </div>
 
         <Separator className="my-12" />

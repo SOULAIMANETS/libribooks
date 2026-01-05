@@ -1,24 +1,22 @@
-
-
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ContactForm } from '@/components/ContactForm';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { Metadata } from 'next';
-import pagesData from '@/lib/pages.json';
+import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata(): Promise<Metadata> {
-    const pageData = pagesData.find(p => p.slug === 'contact');
-    
-    return {
-        title: pageData?.title || 'Contact Us',
-        description: 'Get in touch with the libribooks.com team. We\'d love to hear from you!',
-    };
+  const pageData = await pageService.getBySlug('contact');
+
+  return {
+    title: pageData?.title || 'Contact Us',
+    description: 'Get in touch with the libribooks.com team. We\'d love to hear from you!',
+  };
 }
 
-export default function ContactPage() {
-  const pageData = pagesData.find(p => p.slug === 'contact');
+export default async function ContactPage() {
+  const pageData = await pageService.getBySlug('contact');
 
   if (!pageData) {
     notFound();

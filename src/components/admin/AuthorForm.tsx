@@ -42,9 +42,9 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
   const formMethods = useForm<AuthorFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-        name: "",
-        image: "",
-        bio: "",
+      name: "",
+      image: "",
+      bio: "",
     },
   });
 
@@ -52,11 +52,11 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
     if (initialData) {
       formMethods.reset(initialData);
     } else {
-        formMethods.reset({
-            name: "",
-            image: "",
-            bio: "",
-        });
+      formMethods.reset({
+        name: "",
+        image: "",
+        bio: "",
+      });
     }
   }, [initialData, formMethods.reset]);
 
@@ -68,57 +68,57 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
       title: `Author ${initialData ? 'updated' : 'added'}!`,
       description: `"${values.name}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
     });
-    
+
     onSuccess?.();
     if (!initialData) {
-        formMethods.reset();
+      formMethods.reset();
     }
   };
 
   return (
     <FormProvider {...formMethods}>
-    <Form {...formMethods}>
-      <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-        <FormField
-          control={formMethods.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="J.K. Rowling" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <ImageUpload name="image" label="Author Image" currentValue={initialData?.image} />
+      <Form {...formMethods}>
+        <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+          <FormField
+            control={formMethods.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="J.K. Rowling" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={formMethods.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bio</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="A short biography of the author..."
-                  rows={5}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end pt-4">
+          <ImageUpload name="image" label="Author Image" currentValue={initialData?.image} folder="authors" />
+
+          <FormField
+            control={formMethods.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bio</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="A short biography of the author..."
+                    rows={5}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end pt-4">
             <Button type="submit">
-                {initialData ? 'Update Author' : 'Add Author'}
+              {initialData ? 'Update Author' : 'Add Author'}
             </Button>
-        </div>
-      </form>
-    </Form>
+          </div>
+        </form>
+      </Form>
     </FormProvider>
   );
 }

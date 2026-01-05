@@ -1,78 +1,139 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+    getPaginationRowModel,
+    SortingState,
+    getSortedRowModel,
+    ColumnFiltersState,
+    getFilteredRowModel,
 } from '@tanstack/react-table';
-import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
-import articlesData from '@/lib/articles.json';
+import { articleService } from '@/lib/services';
 import type { Article } from '@/lib/types';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArticleForm } from '@/components/admin/ArticleForm';
-
-// NOTE: In a real app, you would fetch this data from a server and have write operations.
-// For this prototype, we'll manipulate the imported data in memory.
-const articles = articlesData.map(article => ({...article}));
+import { useToast } from '@/hooks/use-toast';
 
 export default function ArticlesDashboardPage() {
-    const [data, setData] = React.useState(articles);
+    const [data, setData] = React.useState<Article[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [isAddArticleOpen, setAddArticleOpen] = React.useState(false);
     const [editingArticle, setEditingArticle] = React.useState<Article | null>(null);
     const [deletingArticle, setDeletingArticle] = React.useState<Article | null>(null);
+    const { toast } = useToast();
 
-    const deleteArticle = (articleSlug: string) => {
-        setData(data.filter(article => article.slug !== articleSlug));
+    const fetchArticles = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const articles = await articleService.getAll();
+            setData(articles);
+        } catch (error) {
+            console.error('Error fetching articles:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to fetch articles.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
+
+    React.useEffect(() => {
+        fetchArticles();
+    }, [fetchArticles]);
+
+    const deleteArticle = async (articleSlug: string) => {
+        try {
+            await articleService.delete(articleSlug);
+            setData(data.filter(article => article.slug !== articleSlug));
+            toast({
+                title: 'Article deleted',
+                description: 'The article has been successfully removed.',
+            });
+        } catch (error) {
+            console.error('Error deleting article:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to delete the article.',
+                variant: 'destructive',
+            });
+        }
     };
 
-    const addArticle = (article: Omit<Article, 'slug'>) => {
-        // basic slug generation
-        const slug = article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-        const newArticle = { ...article, slug };
-        setData([newArticle, ...data]);
+    const addArticle = async (article: Omit<Article, 'slug'>) => {
+        try {
+            const slug = article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+            await articleService.create({ ...article, slug });
+            await fetchArticles();
+            setAddArticleOpen(false);
+            toast({
+                title: 'Article added',
+                description: 'The new article has been successfully saved.',
+            });
+        } catch (error) {
+            console.error('Error adding article:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to add the article.',
+                variant: 'destructive',
+            });
+        }
     };
 
-    const updateArticle = (updatedArticle: Article) => {
-        setData(data.map(article => (article.slug === updatedArticle.slug ? updatedArticle : article)));
+    const updateArticle = async (updatedArticle: Article) => {
+        try {
+            await articleService.update(updatedArticle.slug, updatedArticle);
+            await fetchArticles();
+            setEditingArticle(null);
+            toast({
+                title: 'Article updated',
+                description: 'The article has been successfully updated.',
+            });
+        } catch (error) {
+            console.error('Error updating article:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update the article.',
+                variant: 'destructive',
+            });
+        }
     };
 
 
@@ -112,8 +173,8 @@ export default function ArticlesDashboardPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -122,7 +183,7 @@ export default function ArticlesDashboardPage() {
                                 Edit Article
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onSelect={() => setDeletingArticle(article)}
                             >
@@ -146,23 +207,32 @@ export default function ArticlesDashboardPage() {
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         state: {
-          sorting,
-          columnFilters,
+            sorting,
+            columnFilters,
         },
     });
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading articles...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full">
             <div className="flex items-center justify-between py-4">
                 <Input
-                  placeholder="Filter by title..."
-                  value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
-                  onChange={(event) =>
-                    table.getColumn('title')?.setFilterValue(event.target.value)
-                  }
-                  className="max-w-sm"
+                    placeholder="Filter by title..."
+                    value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) =>
+                        table.getColumn('title')?.setFilterValue(event.target.value)
+                    }
+                    className="max-w-sm"
                 />
-                 <Dialog open={isAddArticleOpen} onOpenChange={setAddArticleOpen}>
+                <Dialog open={isAddArticleOpen} onOpenChange={setAddArticleOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => setAddArticleOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add New Article
@@ -170,26 +240,26 @@ export default function ArticlesDashboardPage() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-3xl">
                         <DialogHeader>
-                        <DialogTitle>Add a New Article</DialogTitle>
-                        <DialogDescription>
-                           Fill out the form below to add a new article.
-                        </DialogDescription>
+                            <DialogTitle>Add a New Article</DialogTitle>
+                            <DialogDescription>
+                                Fill out the form below to add a new article.
+                            </DialogDescription>
                         </DialogHeader>
                         <ArticleForm
-                          key="add-article-form"
-                          onSubmit={addArticle}
-                          onSuccess={() => setAddArticleOpen(false)}
+                            key="add-article-form"
+                            onSubmit={addArticle}
+                            onSuccess={() => { }}
                         />
                     </DialogContent>
                 </Dialog>
             </div>
-             <Dialog open={!!editingArticle} onOpenChange={(isOpen) => !isOpen && setEditingArticle(null)}>
+            <Dialog open={!!editingArticle} onOpenChange={(isOpen) => !isOpen && setEditingArticle(null)}>
                 <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
-                    <DialogTitle>Edit Article</DialogTitle>
-                    <DialogDescription>
-                        Update the details for "{editingArticle?.title}".
-                    </DialogDescription>
+                        <DialogTitle>Edit Article</DialogTitle>
+                        <DialogDescription>
+                            Update the details for "{editingArticle?.title}".
+                        </DialogDescription>
                     </DialogHeader>
                     {editingArticle && (
                         <ArticleForm
@@ -198,18 +268,18 @@ export default function ArticlesDashboardPage() {
                             onSubmit={(articleData) => {
                                 updateArticle({ ...articleData, slug: editingArticle.slug });
                             }}
-                            onSuccess={() => setEditingArticle(null)}
+                            onSuccess={() => { }}
                         />
                     )}
                 </DialogContent>
-             </Dialog>
-             <AlertDialog open={!!deletingArticle} onOpenChange={(isOpen) => !isOpen && setDeletingArticle(null)}>
+            </Dialog>
+            <AlertDialog open={!!deletingArticle} onOpenChange={(isOpen) => !isOpen && setDeletingArticle(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the article
-                        "{deletingArticle?.title}".
+                            This action cannot be undone. This will permanently delete the article
+                            "{deletingArticle?.title}".
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -220,11 +290,11 @@ export default function ArticlesDashboardPage() {
                                 setDeletingArticle(null)
                             }
                         }}>
-                        Continue
+                            Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-             </AlertDialog>
+            </AlertDialog>
 
             <div className="rounded-md border">
                 <Table>
@@ -236,9 +306,9 @@ export default function ArticlesDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>

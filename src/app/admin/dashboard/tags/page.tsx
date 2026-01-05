@@ -1,99 +1,131 @@
-
 'use client'
 
 import * as React from 'react';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
 } from '@tanstack/react-table';
-import { MoreHorizontal, PlusCircle, Trash2, Edit } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Loader2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
-import tagsData from '@/lib/tags.json';
+import { tagService } from '@/lib/services';
 import type { Tag } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
-const tags = tagsData.map(tag => ({...tag}));
-
 export default function TagsDashboardPage() {
-    const [data, setData] = React.useState(tags);
+    const [data, setData] = React.useState<Tag[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [newTagName, setNewTagName] = React.useState('');
     const [editingTag, setEditingTag] = React.useState<Tag | null>(null);
     const [updatedName, setUpdatedName] = React.useState('');
     const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
 
-    const addTag = () => {
+    const fetchTags = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const tags = await tagService.getAll();
+            setData(tags);
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        fetchTags();
+    }, [fetchTags]);
+
+    const addTag = async () => {
         if (!newTagName.trim()) {
-             toast({
+            toast({
                 title: "Error",
                 description: "Tag name cannot be empty.",
                 variant: "destructive",
             });
             return;
         }
-        const newTag = { id: Math.max(...data.map(c => c.id), 0) + 1, name: newTagName };
-        setData([newTag, ...data]);
-        setNewTagName('');
-        toast({
-            title: "Tag Added!",
-            description: `"${newTagName}" has been successfully added.`,
-        });
+        try {
+            await tagService.create({ name: newTagName });
+            setNewTagName('');
+            await fetchTags();
+            toast({
+                title: "Tag Added!",
+                description: `"${newTagName}" has been successfully added.`,
+            });
+        } catch (error) {
+            console.error('Error adding tag:', error);
+            toast({
+                title: "Error",
+                description: "Failed to add tag.",
+                variant: "destructive",
+            });
+        }
     };
 
-    const deleteTag = (tagId: number) => {
-        const tagToDelete = data.find(c => c.id === tagId);
-        setData(data.filter(tag => tag.id !== tagId));
-         toast({
-            title: "Tag Deleted!",
-            description: `"${tagToDelete?.name}" has been successfully deleted.`,
-        });
+    const deleteTag = async (tagId: number) => {
+        try {
+            await tagService.delete(tagId);
+            await fetchTags();
+            toast({
+                title: "Tag Deleted!",
+                description: "The tag has been successfully deleted.",
+            });
+        } catch (error) {
+            console.error('Error deleting tag:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete tag.",
+                variant: "destructive",
+            });
+        }
     };
-    
+
     const startEditing = (tag: Tag) => {
         setEditingTag(tag);
         setUpdatedName(tag.name);
         setEditDialogOpen(true);
     }
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (!editingTag || !updatedName.trim()) {
             toast({
                 title: "Error",
@@ -102,14 +134,24 @@ export default function TagsDashboardPage() {
             });
             return;
         }
-        setData(data.map(cat => cat.id === editingTag.id ? {...cat, name: updatedName} : cat));
-        toast({
-            title: "Tag Updated!",
-            description: `Tag has been successfully renamed to "${updatedName}".`,
-        });
-        setEditDialogOpen(false);
-        setEditingTag(null);
-        setUpdatedName('');
+        try {
+            await tagService.update(editingTag.id, { name: updatedName });
+            await fetchTags();
+            toast({
+                title: "Tag Updated!",
+                description: `Tag has been successfully renamed to "${updatedName}".`,
+            });
+            setEditDialogOpen(false);
+            setEditingTag(null);
+            setUpdatedName('');
+        } catch (error) {
+            console.error('Error updating tag:', error);
+            toast({
+                title: "Error",
+                description: "Failed to update tag.",
+                variant: "destructive",
+            });
+        }
     }
 
     const columns: ColumnDef<Tag>[] = [
@@ -127,40 +169,40 @@ export default function TagsDashboardPage() {
                 return (
                     <AlertDialog>
                         <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => startEditing(tag)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                            </DropdownMenuItem>
-                            <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => e.preventDefault()}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                        </DropdownMenuContent>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => startEditing(tag)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </DropdownMenuItem>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => e.preventDefault()}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                            </DropdownMenuContent>
                         </DropdownMenu>
                         <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the tag
-                            "{tag.name}". Books with this tag will need to be re-tagged.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteTag(tag.id)}>
-                            Continue
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the tag
+                                    "{tag.name}". Books with this tag will need to be re-tagged.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteTag(tag.id)}>
+                                    Continue
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                 )
@@ -174,45 +216,54 @@ export default function TagsDashboardPage() {
         getCoreRowModel: getCoreRowModel(),
     });
 
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading tags...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-end py-4 gap-2">
                 <Input
-                  placeholder="New tag name..."
-                  value={newTagName}
-                  onChange={(event) => setNewTagName(event.target.value)}
-                  className="max-w-sm"
-                  onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                    placeholder="New tag name..."
+                    value={newTagName}
+                    onChange={(event) => setNewTagName(event.target.value)}
+                    className="max-w-sm"
+                    onKeyDown={(e) => e.key === 'Enter' && addTag()}
                 />
                 <Button onClick={addTag}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Tag
                 </Button>
             </div>
-             <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+            <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                    <DialogTitle>Edit Tag</DialogTitle>
-                    <DialogDescription>
-                        Make changes to the tag name here. Click save when you're done.
-                    </DialogDescription>
+                        <DialogTitle>Edit Tag</DialogTitle>
+                        <DialogDescription>
+                            Make changes to the tag name here. Click save when you're done.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">
-                        Name
-                        </Label>
-                        <Input
-                            id="name"
-                            value={updatedName}
-                            onChange={(e) => setUpdatedName(e.target.value)}
-                            className="col-span-3"
-                             onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-                        />
-                    </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">
+                                Name
+                            </Label>
+                            <Input
+                                id="name"
+                                value={updatedName}
+                                onChange={(e) => setUpdatedName(e.target.value)}
+                                className="col-span-3"
+                                onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
+                            />
+                        </div>
                     </div>
                     <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-                      <Button type="submit" onClick={handleUpdate}>Save changes</Button>
+                        <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleUpdate}>Save changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -226,9 +277,9 @@ export default function TagsDashboardPage() {
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
                                     </TableHead>
                                 ))}
                             </TableRow>
