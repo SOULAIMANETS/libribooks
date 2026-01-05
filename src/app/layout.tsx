@@ -65,13 +65,18 @@ const headlineFont = fontMapper[appearanceSettings.headlineFont as keyof typeof 
 const bodyFont = fontMapper[appearanceSettings.bodyFont as keyof typeof fontMapper];
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await settingsService.get('general');
+  const [settings, seoSettings] = await Promise.all([
+    settingsService.get('general'),
+    settingsService.get('seo')
+  ]);
+
   const siteConfig = {
-    name: settings?.siteName || 'libribooks.com',
+    name: seoSettings?.defaultTitle || settings?.siteName || 'libribooks.com',
     url: 'https://libribooks.com',
-    description: settings?.tagline || 'Discover your next favorite book with our insightful reviews, articles, and author interviews.',
+    description: seoSettings?.metaDescription || settings?.tagline || 'Discover your next favorite book with our insightful reviews, articles, and author interviews.',
     ogImage: 'https://libribooks.com/og.jpg',
     favicon: settings?.faviconUrl || '/favicon.ico',
+    keywords: seoSettings?.globalKeywords ? seoSettings.globalKeywords.split(',').map((k: string) => k.trim()) : [],
   };
 
   return {
@@ -80,6 +85,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${siteConfig.name}`,
     },
     description: siteConfig.description,
+    keywords: siteConfig.keywords,
     metadataBase: new URL(siteConfig.url),
     openGraph: {
       type: 'website',
@@ -114,29 +120,33 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [activeAds, settings] = await Promise.all([
+  const [activeAds, settings, seoSettings] = await Promise.all([
     popupAdService.getActive(),
-    settingsService.get('general')
+    settingsService.get('general'),
+    settingsService.get('seo')
   ]);
 
   const siteSettings = settings || { siteName: 'libribooks.com' };
+  const enableSchema = seoSettings?.enableSchema ?? true;
 
   return (
     <html lang="en" suppressHydrationWarning className={cn(headlineFont.variable, bodyFont.variable)}>
       <head>
-        <JsonLd<WebSite>
-          item={{
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: siteSettings.siteName,
-            url: 'https://libribooks.com',
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: `https://libribooks.com/?q={search_term_string}`,
-              'query-input': 'required name=search_term_string',
-            } as any,
-          }}
-        />
+        {enableSchema && (
+          <JsonLd<WebSite>
+            item={{
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: seoSettings?.defaultTitle || siteSettings.siteName,
+              url: 'https://libribooks.com',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: `https://libribooks.com/?q={search_term_string}`,
+                'query-input': 'required name=search_term_string',
+              } as any,
+            }}
+          />
+        )}
       </head>
       <body className={cn('font-body antialiased min-h-screen flex flex-col')}>
         <ThemeProvider

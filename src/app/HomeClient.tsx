@@ -27,13 +27,13 @@ import { JsonLd } from 'react-schemaorg';
 import { FAQPage, Question } from 'schema-dts';
 import type { Book, Author } from '@/lib/types';
 
-interface HomeClientProps {
-  allBooks: Book[];
-  authors: Author[];
-  faqItems: { question: string; answer: string }[];
+allBooks: Book[];
+authors: Author[];
+faqItems: { question: string; answer: string } [];
+tagline ?: string;
 }
 
-export default function HomeClient({ allBooks, authors, faqItems }: HomeClientProps) {
+export default function HomeClient({ allBooks, authors, faqItems, tagline }: HomeClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -73,7 +73,7 @@ export default function HomeClient({ allBooks, authors, faqItems }: HomeClientPr
       <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <section className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-foreground">
-            Your Next Literary Adventure
+            {tagline || "Your Next Literary Adventure"}
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
             Explore our collection or search for your next favorite read.
