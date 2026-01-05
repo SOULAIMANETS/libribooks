@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -12,17 +11,42 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BookCopy, Users, FileText, Bookmark } from 'lucide-react';
+import { BookCopy, Users, FileText, Bookmark, Loader2 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import books from '@/lib/data.json';
-import authors from '@/lib/authors.json';
-import articles from '@/lib/articles.json';
-import categories from '@/lib/categories.json';
-import { useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { BookCoverCard } from '@/components/BookCoverCard';
-import Link from 'next/link';
+import { bookService, authorService, articleService, categoryService } from '@/lib/services';
+import type { Book, Author, Article, Category } from '@/lib/types';
 
 export default function DashboardPage() {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [booksData, authorsData, articlesData, categoriesData] = await Promise.all([
+          bookService.getAll(),
+          authorService.getAll(),
+          articleService.getAll(),
+          categoryService.getAll(),
+        ]);
+        setBooks(booksData);
+        setAuthors(authorsData);
+        setArticles(articlesData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const totalBooks = books.length;
   const totalAuthors = authors.length;
   const totalArticles = articles.length;
@@ -30,7 +54,9 @@ export default function DashboardPage() {
 
   const booksByCategory = useMemo(() => {
     const categoryCounts = books.reduce((acc, book) => {
-      acc[book.category] = (acc[book.category] || 0) + 1;
+      // Handle cases where generic category might be null or undefined
+      const catName = book.category || 'Uncategorized';
+      acc[catName] = (acc[catName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -38,13 +64,22 @@ export default function DashboardPage() {
       category,
       count,
     }));
-  }, []);
+  }, [books]);
 
   const recentBooks = useMemo(() => {
-    // Assuming books are ordered by date added in data.json, we can just take the last 5.
-    // In a real app, you'd sort by a `createdAt` timestamp.
+    // Assuming the API returns them sorted or we just take the first 5
+    // If exact date sorting is needed, ensures books has a date field
     return books.slice(0, 5);
-  }, []);
+  }, [books]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-24">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading dashboard data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6">
@@ -89,25 +124,25 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-            <CardHeader>
-              <CardTitle>Recently Added Books</CardTitle>
-              <CardDescription>
-                The latest additions to your library.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
-                  {recentBooks.map((book) => (
-                    <div key={book.id}>
-                        <div className="relative aspect-[2/3] w-full">
-                           <BookCoverCard book={book} />
-                        </div>
-                        <p className="text-xs font-medium truncate mt-1 text-center">{book.title}</p>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
+          <CardHeader>
+            <CardTitle>Recently Added Books</CardTitle>
+            <CardDescription>
+              The latest additions to your library.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+              {recentBooks.map((book) => (
+                <div key={book.id}>
+                  <div className="relative aspect-[2/3] w-full">
+                    <BookCoverCard book={book} />
+                  </div>
+                  <p className="text-xs font-medium truncate mt-1 text-center">{book.title}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Books by Category</CardTitle>

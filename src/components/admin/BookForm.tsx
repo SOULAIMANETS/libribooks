@@ -20,9 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Book, Category, Tag } from "@/lib/types";
-import categories from "@/lib/categories.json";
-import allTags from "@/lib/tags.json";
+import { Book, Category, Tag, Author } from "@/lib/types";
+import { categoryService, tagService, authorService } from "@/lib/services";
 import {
   Select,
   SelectContent,
@@ -30,13 +29,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ImageUpload } from "./ImageUpload";
 import { Separator } from "../ui/separator";
+import { ChevronsUpDown, Search } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
-  authors: z.string().min(1, { message: "Author name is required." }),
+  authors: z.array(z.string()).min(1, { message: "Select at least one author." }),
   category: z.string().min(1, { message: "Please select a category." }),
   coverImage: z.string().min(1, { message: "Please upload an image." }),
   review: z.string().min(20, { message: "Review must be at least 20 characters." }),
@@ -54,18 +60,18 @@ const formSchema = z.object({
 type BookFormValues = z.infer<typeof formSchema>;
 
 const defaultFormValues = {
-    title: "",
-    authors: "",
-    category: "",
-    coverImage: "",
-    review: "",
-    purchaseUrls: {
-        paperback: "",
-        audiobook: "",
-        ebook: "",
-    },
-    tags: [],
-    quotes: "",
+  title: "",
+  authors: [],
+  category: "",
+  coverImage: "",
+  review: "",
+  purchaseUrls: {
+    paperback: "",
+    audiobook: "",
+    ebook: "",
+  },
+  tags: [],
+  quotes: "",
 };
 
 interface BookFormProps {
@@ -76,29 +82,57 @@ interface BookFormProps {
 
 export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
   const { toast } = useToast();
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [allTags, setAllTags] = React.useState<Tag[]>([]);
+  const [allAuthors, setAllAuthors] = React.useState<Author[]>([]);
+  const [authorSearch, setAuthorSearch] = React.useState("");
+  const [isAuthorOpen, setAuthorOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [cats, tags, authors] = await Promise.all([
+          categoryService.getAll(),
+          tagService.getAll(),
+          authorService.getAll()
+        ]);
+        setCategories(cats);
+        setAllTags(tags);
+        setAllAuthors(authors);
+      } catch (error) {
+        console.error("Failed to fetch metadata:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load categories, tags, or authors.",
+          variant: "destructive"
+        });
+      }
+    };
+    fetchMetadata();
+  }, [toast]);
 
   const formMethods = useForm<BookFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-        ...initialData,
-        authors: initialData.authors.join(", "),
-        tags: initialData.tags || [],
-        quotes: initialData.quotes?.join("\\n") || "",
-        purchaseUrls: {
-          paperback: initialData.purchaseUrls?.paperback || "",
-          audiobook: initialData.purchaseUrls?.audiobook || "",
-          ebook: initialData.purchaseUrls?.ebook || "",
-        }
+      ...initialData,
+      authors: Array.isArray(initialData.authors) ? initialData.authors : [],
+      tags: initialData.tags || [],
+      quotes: initialData.quotes?.join("\n") || "",
+      purchaseUrls: {
+        paperback: initialData.purchaseUrls?.paperback || "",
+        audiobook: initialData.purchaseUrls?.audiobook || "",
+        ebook: initialData.purchaseUrls?.ebook || "",
+      }
     } : defaultFormValues,
   });
 
-   React.useEffect(() => {
+  React.useEffect(() => {
     if (initialData) {
       formMethods.reset({
         ...initialData,
-        authors: initialData.authors.join(", "),
+        authors: Array.isArray(initialData.authors) ? initialData.authors : [],
         tags: initialData.tags || [],
-        quotes: initialData.quotes?.join("\\n") || "",
+        quotes: initialData.quotes?.join("\n") || "",
         purchaseUrls: {
           paperback: initialData.purchaseUrls?.paperback || "",
           audiobook: initialData.purchaseUrls?.audiobook || "",
@@ -114,9 +148,9 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
   const handleSubmit = (values: BookFormValues) => {
     const bookData = {
       ...values,
-      quotes: values.quotes?.split("\\n").map(q => q.trim()).filter(q => q) || [],
+      quotes: values.quotes?.split("\n").map(q => q.trim()).filter(q => q) || [],
     };
-    
+
     // @ts-ignore
     onSubmit(bookData);
 
@@ -124,222 +158,298 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
       title: `Book ${initialData ? 'updated' : 'added'}!`,
       description: `"${values.title}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
     });
-    
+
     onSuccess?.();
     if (!initialData) {
-        formMethods.reset(defaultFormValues);
+      formMethods.reset(defaultFormValues);
     }
   };
 
   return (
     <FormProvider {...formMethods}>
-    <Form {...formMethods}>
-      <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-        
-        <FormField
-          control={formMethods.control}
-          name="title"
-          render={({ field }) => (
-              <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                  <Input placeholder="The Great Gatsby" {...field} />
-              </FormControl>
-              <FormMessage />
-              </FormItem>
-          )}
-        />
+      <Form {...formMethods}>
+        <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
 
-        <FormField
+          <FormField
+            control={formMethods.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="The Great Gatsby" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
             control={formMethods.control}
             name="authors"
             render={({ field }) => (
-            <FormItem>
+              <FormItem>
                 <FormLabel>Author(s)</FormLabel>
-                <FormControl>
-                <Input placeholder="F. Scott Fitzgerald" {...field} />
-                </FormControl>
+                <div className="flex flex-col gap-2">
+                  <Popover open={isAuthorOpen} onOpenChange={setAuthorOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isAuthorOpen}
+                          className="w-full justify-between"
+                        >
+                          {field.value?.length > 0
+                            ? `${field.value.length} authors selected`
+                            : "Select authors..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <div className="p-2 border-b">
+                        <div className="flex items-center px-2">
+                          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                          <input
+                            className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Search authors..."
+                            value={authorSearch}
+                            onChange={(e) => setAuthorSearch(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <ScrollArea className="h-[200px] p-2">
+                        {allAuthors.filter(author =>
+                          author.name.toLowerCase().includes(authorSearch.toLowerCase())
+                        ).length === 0 ? (
+                          <p className="text-sm text-center text-muted-foreground py-4">No authors found.</p>
+                        ) : (
+                          <div className="flex flex-col gap-1">
+                            {allAuthors.filter(author =>
+                              author.name.toLowerCase().includes(authorSearch.toLowerCase())
+                            ).map((author) => (
+                              <div key={author.id} className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer" onClick={() => {
+                                const current = field.value || [];
+                                const isSelected = current.includes(author.name);
+                                if (isSelected) {
+                                  field.onChange(current.filter((n: string) => n !== author.name));
+                                } else {
+                                  field.onChange([...current, author.name]);
+                                }
+                              }}>
+                                <Checkbox
+                                  id={`author-${author.id}`}
+                                  checked={field.value?.includes(author.name)}
+                                  onCheckedChange={() => { }} // Handled by div click
+                                />
+                                <label
+                                  htmlFor={`author-${author.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer pointer-events-none"
+                                >
+                                  {author.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+                  {field.value?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {field.value.map((authorName: string) => (
+                        <div key={authorName} className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                          {authorName}
+                          <span className="cursor-pointer ml-1 text-muted-foreground hover:text-foreground" onClick={() => {
+                            field.onChange(field.value.filter((n: string) => n !== authorName));
+                          }}>×</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <FormDescription>
-                Separate multiple authors with a comma. New authors will be created automatically.
+                  Select existing authors from the database.
                 </FormDescription>
                 <FormMessage />
-            </FormItem>
+              </FormItem>
             )}
-        />
-        
-        <FormField
-          control={formMethods.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+          />
+
+          <FormField
+            control={formMethods.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {(categories as Category[]).map((category) => (
+                    {categories.map((category) => (
                       <SelectItem key={category.id} value={category.name}>
                         {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={formMethods.control}
-          name="review"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Review</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="A detailed review of the book..."
-                  rows={6}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Separator />
-         <FormField
+          <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} />
+
+          <FormField
+            control={formMethods.control}
+            name="review"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Review</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="A detailed review of the book..."
+                    rows={6}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Separator />
+          <FormField
             control={formMethods.control}
             name="tags"
             render={() => (
-                <FormItem>
+              <FormItem>
                 <div className="mb-4">
-                    <FormLabel className="text-base">Tags</FormLabel>
-                    <FormDescription>
+                  <FormLabel className="text-base">Tags</FormLabel>
+                  <FormDescription>
                     Select the tags that best fit this book.
-                    </FormDescription>
+                  </FormDescription>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 border rounded-md max-h-48 overflow-y-auto">
-                    {(allTags as Tag[]).map((tag) => (
+                  {allTags.map((tag) => (
                     <FormField
-                        key={tag.id}
-                        control={formMethods.control}
-                        name="tags"
-                        render={({ field }) => {
+                      key={tag.id}
+                      control={formMethods.control}
+                      name="tags"
+                      render={({ field }) => {
                         return (
-                            <FormItem
+                          <FormItem
                             key={tag.id}
                             className="flex flex-row items-start space-x-3 space-y-0"
-                            >
+                          >
                             <FormControl>
-                                <Checkbox
+                              <Checkbox
                                 checked={field.value?.includes(tag.name)}
                                 onCheckedChange={(checked) => {
-                                    return checked
+                                  return checked
                                     ? field.onChange([...(field.value || []), tag.name])
                                     : field.onChange(
-                                        field.value?.filter(
-                                            (value) => value !== tag.name
-                                        )
-                                        )
+                                      field.value?.filter(
+                                        (value) => value !== tag.name
+                                      )
+                                    )
                                 }}
-                                />
+                              />
                             </FormControl>
                             <FormLabel className="font-normal">
-                                {tag.name}
+                              {tag.name}
                             </FormLabel>
-                            </FormItem>
+                          </FormItem>
                         )
-                        }}
+                      }}
                     />
-                    ))}
+                  ))}
                 </div>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-        <Separator />
-         <FormField
-          control={formMethods.control}
-          name="quotes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quotes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder={`"It was the best of times..."\\n"Call me Ishmael."`}
-                  rows={4}
-                  {...field}
-                />
-              </FormControl>
-               <FormDescription>
-                Enter one quote per line.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Separator />
-         <div className="space-y-4">
+          />
+          <Separator />
+          <FormField
+            control={formMethods.control}
+            name="quotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quotes</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder={`"It was the best of times..."\n"Call me Ishmael."`}
+                    rows={4}
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Enter one quote per line.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Separator />
+          <div className="space-y-4">
             <h3 className="text-lg font-medium">Purchase Links</h3>
             <FormDescription>
               Enter the full URLs for any available formats. Leave blank if not applicable.
             </FormDescription>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                    control={formMethods.control}
-                    name="purchaseUrls.paperback"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Paperback URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://example.com/buy-paperback" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={formMethods.control}
-                    name="purchaseUrls.ebook"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>E-book URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://example.com/buy-ebook" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={formMethods.control}
-                    name="purchaseUrls.audiobook"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Audiobook URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://example.com/buy-audiobook" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-             </div>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={formMethods.control}
+                name="purchaseUrls.paperback"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Paperback URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/buy-paperback" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="purchaseUrls.ebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-book URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/buy-ebook" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="purchaseUrls.audiobook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Audiobook URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/buy-audiobook" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
-        <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-4">
             <Button type="submit">
-                {initialData ? 'Update Book' : 'Add Book'}
+              {initialData ? 'Update Book' : 'Add Book'}
             </Button>
-        </div>
-      </form>
-    </Form>
+          </div>
+        </form>
+      </Form>
     </FormProvider>
   );
 }

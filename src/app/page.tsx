@@ -1,6 +1,8 @@
 import { bookService, authorService, pageService } from '@/lib/services';
 import HomeClient from './HomeClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const allBooks = await bookService.getAll();
   const authors = await authorService.getAll();

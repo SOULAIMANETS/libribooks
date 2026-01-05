@@ -138,13 +138,18 @@ export default function BooksDashboardPage() {
 
     const addBook = async (book: any) => {
         try {
-            const authorNames = book.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
-            const authorIds = await handleAuthorProcessing(authorNames);
+            const authorInput = book.authors;
+            const authorNames = Array.isArray(authorInput)
+                ? authorInput
+                : (typeof authorInput === 'string' ? authorInput.split(',') : []);
+
+            const processedNames = authorNames.map((s: string) => s.trim()).filter(Boolean);
+            const authorIds = await handleAuthorProcessing(processedNames);
 
             await bookService.create({
                 ...book,
                 authorIds,
-                authors: authorNames
+                authors: processedNames
             });
 
             await fetchData();
@@ -161,13 +166,18 @@ export default function BooksDashboardPage() {
 
     const updateBook = async (updatedBook: any) => {
         try {
-            const authorNames = updatedBook.authors.split(',').map((s: string) => s.trim()).filter(Boolean);
-            const authorIds = await handleAuthorProcessing(authorNames);
+            const authorInput = updatedBook.authors;
+            const authorNames = Array.isArray(authorInput)
+                ? authorInput
+                : (typeof authorInput === 'string' ? authorInput.split(',') : []);
+
+            const processedNames = authorNames.map((s: string) => s.trim()).filter(Boolean);
+            const authorIds = await handleAuthorProcessing(processedNames);
 
             await bookService.update(updatedBook.id, {
                 ...updatedBook,
                 authorIds,
-                authors: authorNames
+                authors: processedNames
             });
 
             await fetchData();
