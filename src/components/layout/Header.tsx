@@ -31,10 +31,12 @@ export function Header() {
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-2xl font-bold font-headline transition-opacity hover:opacity-90">
           {logoUrl ? (
-            <div className="relative h-10 w-auto aspect-[4/1]">
-              {/* Using unoptimized to allow any size/ratio without strict config, though remotePatterns are set */}
-              <img src={logoUrl} alt={siteName} className="h-full w-auto object-contain" />
-            </div>
+            <>
+              <div className="relative h-10 w-auto">
+                <img src={logoUrl} alt={siteName} className="h-full w-auto object-contain" />
+              </div>
+              <span>{siteName}</span>
+            </>
           ) : (
             <>
               <Book className="h-7 w-7 text-primary" />
