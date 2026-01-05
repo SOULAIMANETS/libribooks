@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +20,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "../ui/textarea";
 import { Switch } from "../ui/switch";
+import { settingsService } from "@/lib/services";
 
 
 const formSchema = z.object({
   defaultTitle: z.string().min(2, { message: "Default title must be at least 2 characters." }),
-  metaDescription: z.string().max(160, { message: "Description should be 160 characters or less."}).optional(),
+  metaDescription: z.string().max(160, { message: "Description should be 160 characters or less." }).optional(),
   globalKeywords: z.string().optional(),
   enableSchema: z.boolean().default(true),
 });
@@ -34,8 +35,9 @@ type SeoSettingsFormValues = z.infer<typeof formSchema>;
 
 export function SeoSettingsForm() {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
 
-  const currentSettings = {
+  const defaultValues = {
     defaultTitle: "libribooks.com | Your Next Literary Adventure",
     metaDescription: "Discover your next favorite book with our insightful reviews, articles, and author interviews.",
     globalKeywords: "book reviews, literature, fiction, non-fiction, author interviews",
@@ -44,19 +46,45 @@ export function SeoSettingsForm() {
 
   const form = useForm<SeoSettingsFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: currentSettings,
+    defaultValues,
   });
 
-  const handleSubmit = (values: SeoSettingsFormValues) => {
-    // In a real application, you would save these settings to your database
-    // and use them to dynamically populate the <head> of your pages.
-    console.log(values);
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await settingsService.get('seo');
+        if (settings) {
+          form.reset(settings);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [form]);
 
-    toast({
-      title: `SEO settings updated!`,
-      description: `Your SEO settings have been successfully saved.`,
-    });
+  const handleSubmit = async (values: SeoSettingsFormValues) => {
+    try {
+      await settingsService.upsert('seo', values);
+      toast({
+        title: `SEO settings updated!`,
+        description: `Your SEO settings have been successfully saved.`,
+      });
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return <div>Loading settings...</div>;
+  }
 
   return (
     <Form {...form}>
@@ -93,7 +121,7 @@ export function SeoSettingsForm() {
             </FormItem>
           )}
         />
-         <FormField
+        <FormField
           control={form.control}
           name="globalKeywords"
           render={({ field }) => (
@@ -102,14 +130,14 @@ export function SeoSettingsForm() {
               <FormControl>
                 <Input placeholder="books, reading, reviews, authors" {...field} />
               </FormControl>
-               <FormDescription>
+              <FormDescription>
                 Comma-separated keywords that describe your site's content.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-         <FormField
+        <FormField
           control={form.control}
           name="enableSchema"
           render={({ field }) => (
@@ -133,9 +161,9 @@ export function SeoSettingsForm() {
         />
 
         <div className="flex justify-end pt-4">
-            <Button type="submit">
-                Save Changes
-            </Button>
+          <Button type="submit">
+            Save Changes
+          </Button>
         </div>
       </form>
     </Form>

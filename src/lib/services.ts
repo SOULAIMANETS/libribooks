@@ -475,3 +475,33 @@ export const userService = {
         if (error) throw error;
     }
 };
+
+export const settingsService = {
+    async get(key: string): Promise<any> {
+        const { data, error } = await supabase.from('settings').select('value').eq('key', key).single();
+        if (error) return null;
+        return data.value;
+    },
+
+    async getAll(): Promise<Record<string, any>> {
+        const { data, error } = await supabase.from('settings').select('*');
+        if (error) throw error;
+
+        const settingsMap: Record<string, any> = {};
+        data.forEach(item => {
+            settingsMap[item.key] = item.value;
+        });
+        return settingsMap;
+    },
+
+    async upsert(key: string, value: any): Promise<any> {
+        const { data, error } = await supabase
+            .from('settings')
+            .upsert({ key, value, updated_at: new Date().toISOString() })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data.value;
+    }
+};

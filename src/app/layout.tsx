@@ -9,49 +9,8 @@ import { JsonLd } from 'react-schemaorg';
 import { WebSite } from 'schema-dts';
 import { appearanceSettings } from '@/lib/siteConfig';
 import { PopupContainer } from '@/components/PopupContainer';
-import { popupAdService } from '@/lib/services';
-
-const siteConfig = {
-  name: 'libribooks.com',
-  url: 'https://libribooks.com',
-  description: 'Discover your next favorite book with our insightful reviews, articles, and author interviews.',
-  ogImage: 'https://libribooks.com/og.jpg',
-};
-
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  metadataBase: new URL(siteConfig.url),
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name,
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [siteConfig.ogImage],
-    creator: '@libribooks',
-  },
-  icons: {
-    icon: '/favicon.ico',
-  },
-};
-
+import { popupAdService, settingsService } from '@/lib/services';
+import { SiteSettingsProvider } from '@/components/SiteSettingsContext';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -105,13 +64,62 @@ const fontMapper = {
 const headlineFont = fontMapper[appearanceSettings.headlineFont as keyof typeof fontMapper];
 const bodyFont = fontMapper[appearanceSettings.bodyFont as keyof typeof fontMapper];
 
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await settingsService.get('general');
+  const siteConfig = {
+    name: settings?.siteName || 'libribooks.com',
+    url: 'https://libribooks.com',
+    description: settings?.tagline || 'Discover your next favorite book with our insightful reviews, articles, and author interviews.',
+    ogImage: 'https://libribooks.com/og.jpg',
+    favicon: settings?.faviconUrl || '/favicon.ico',
+  };
+
+  return {
+    title: {
+      default: siteConfig.name,
+      template: `%s | ${siteConfig.name}`,
+    },
+    description: siteConfig.description,
+    metadataBase: new URL(siteConfig.url),
+    openGraph: {
+      type: 'website',
+      locale: 'en_US',
+      url: siteConfig.url,
+      title: siteConfig.name,
+      description: siteConfig.description,
+      images: [
+        {
+          url: siteConfig.ogImage,
+          width: 1200,
+          height: 630,
+          alt: siteConfig.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: siteConfig.name,
+      description: siteConfig.description,
+      images: [siteConfig.ogImage],
+      creator: '@libribooks',
+    },
+    icons: {
+      icon: siteConfig.favicon,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const activeAds = await popupAdService.getActive();
+  const [activeAds, settings] = await Promise.all([
+    popupAdService.getActive(),
+    settingsService.get('general')
+  ]);
+
+  const siteSettings = settings || { siteName: 'libribooks.com' };
 
   return (
     <html lang="en" suppressHydrationWarning className={cn(headlineFont.variable, bodyFont.variable)}>
@@ -120,13 +128,13 @@ export default async function RootLayout({
           item={{
             '@context': 'https://schema.org',
             '@type': 'WebSite',
-            name: siteConfig.name,
-            url: siteConfig.url,
+            name: siteSettings.siteName,
+            url: 'https://libribooks.com',
             potentialAction: {
               '@type': 'SearchAction',
-              target: `${siteConfig.url}/?q={search_term_string}`,
+              target: `https://libribooks.com/?q={search_term_string}`,
               'query-input': 'required name=search_term_string',
-            },
+            } as any,
           }}
         />
       </head>
@@ -137,9 +145,11 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
-          <PopupContainer initialAds={activeAds} />
+          <SiteSettingsProvider settings={siteSettings}>
+            {children}
+            <Toaster />
+            <PopupContainer initialAds={activeAds} />
+          </SiteSettingsProvider>
         </ThemeProvider>
       </body>
     </html>

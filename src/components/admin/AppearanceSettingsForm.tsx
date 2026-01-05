@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "../ui/switch";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,14 +29,15 @@ import {
 import { Separator } from "../ui/separator";
 import { Textarea } from "../ui/textarea";
 import { appearanceSettings, fonts } from "@/lib/siteConfig";
+import { settingsService } from "@/lib/services";
 
 const formSchema = z.object({
   enableDarkMode: z.boolean().default(true),
   headlineFont: z.string().default("space_grotesk"),
   bodyFont: z.string().default("literata"),
-  colorPrimary: z.string().min(2, { message: "Color value is required"}),
-  colorBackground: z.string().min(2, { message: "Color value is required"}),
-  colorAccent: z.string().min(2, { message: "Color value is required"}),
+  colorPrimary: z.string().min(2, { message: "Color value is required" }),
+  colorBackground: z.string().min(2, { message: "Color value is required" }),
+  colorAccent: z.string().min(2, { message: "Color value is required" }),
   quickLinks: z.string(),
   legalLinks: z.string(),
 });
@@ -45,8 +46,9 @@ type AppearanceFormValues = z.infer<typeof formSchema>;
 
 export function AppearanceSettingsForm() {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
 
-  const currentSettings = {
+  const defaultValues = {
     ...appearanceSettings,
     quickLinks: appearanceSettings.quickLinks.map(l => `${l.label},${l.href}`).join("\n"),
     legalLinks: appearanceSettings.legalLinks.map(l => `${l.label},${l.href}`).join("\n"),
@@ -54,18 +56,45 @@ export function AppearanceSettingsForm() {
 
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: currentSettings,
+    defaultValues,
   });
 
-  const handleSubmit = (values: AppearanceFormValues) => {
-    // In a real app, you'd save these and trigger a theme update.
-    console.log(values);
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await settingsService.get('appearance');
+        if (settings) {
+          form.reset(settings);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [form]);
 
-    toast({
-      title: `Appearance settings updated!`,
-      description: `Your appearance settings have been successfully saved.`,
-    });
+  const handleSubmit = async (values: AppearanceFormValues) => {
+    try {
+      await settingsService.upsert('appearance', values);
+      toast({
+        title: `Appearance settings updated!`,
+        description: `Your appearance settings have been successfully saved.`,
+      });
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return <div>Loading settings...</div>;
+  }
 
   return (
     <Form {...form}>
@@ -92,19 +121,19 @@ export function AppearanceSettingsForm() {
             </FormItem>
           )}
         />
-        
+
         <Separator />
 
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Fonts</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="headlineFont"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Headline Font</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a font" />
@@ -128,7 +157,7 @@ export function AppearanceSettingsForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Body Font</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a font" />
@@ -146,7 +175,7 @@ export function AppearanceSettingsForm() {
                 </FormItem>
               )}
             />
-           </div>
+          </div>
         </div>
 
         <Separator />
@@ -156,47 +185,47 @@ export function AppearanceSettingsForm() {
           <FormDescription>
             Enter HSL values for your site's main colors. E.g., <code>201 41% 55%</code>
           </FormDescription>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="colorPrimary"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Primary</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="colorBackground"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Background</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="colorAccent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Accent</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="colorPrimary"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="colorBackground"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Background</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="colorAccent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Accent</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <Separator />
@@ -227,9 +256,9 @@ export function AppearanceSettingsForm() {
                 <FormItem>
                   <FormLabel>Legal Links</FormLabel>
                   <FormControl>
-                     <Textarea rows={5} {...field} />
+                    <Textarea rows={5} {...field} />
                   </FormControl>
-                   <FormDescription>
+                  <FormDescription>
                     One link per line. Format: <code>Label,URL</code>
                   </FormDescription>
                   <FormMessage />
@@ -240,9 +269,9 @@ export function AppearanceSettingsForm() {
         </div>
 
         <div className="flex justify-end pt-4">
-            <Button type="submit">
-                Save Changes
-            </Button>
+          <Button type="submit">
+            Save Changes
+          </Button>
         </div>
       </form>
     </Form>

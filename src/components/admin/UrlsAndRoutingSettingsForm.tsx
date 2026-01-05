@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "../ui/switch";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { settingsService } from "@/lib/services";
 
 
 const formSchema = z.object({
@@ -33,8 +34,9 @@ type UrlsAndRoutingSettingsFormValues = z.infer<typeof formSchema>;
 
 export function UrlsAndRoutingSettingsForm() {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
 
-  const currentSettings = {
+  const defaultValues = {
     baseUrl: "https://libribooks.com",
     permalinkStructure: "book" as const,
     enableCanonical: true,
@@ -42,18 +44,46 @@ export function UrlsAndRoutingSettingsForm() {
 
   const form = useForm<UrlsAndRoutingSettingsFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: currentSettings,
+    defaultValues,
   });
 
-  const handleSubmit = (values: UrlsAndRoutingSettingsFormValues) => {
-    // In a real application, you would save these settings and re-generate routes if needed.
-    console.log(values);
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await settingsService.get('routing');
+        if (settings) {
+          form.reset(settings);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [form]);
 
-    toast({
-      title: `Routing settings updated!`,
-      description: `Your URL and routing settings have been successfully saved.`,
-    });
+
+  const handleSubmit = async (values: UrlsAndRoutingSettingsFormValues) => {
+    try {
+      await settingsService.upsert('routing', values);
+      toast({
+        title: `Routing settings updated!`,
+        description: `Your URL and routing settings have been successfully saved.`,
+      });
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return <div>Loading settings...</div>;
+  }
 
   return (
     <Form {...form}>
@@ -74,7 +104,7 @@ export function UrlsAndRoutingSettingsForm() {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="permalinkStructure"
@@ -105,7 +135,7 @@ export function UrlsAndRoutingSettingsForm() {
                   </FormItem>
                 </RadioGroup>
               </FormControl>
-               <FormDescription>
+              <FormDescription>
                 Choose the preferred URL format for your book detail pages.
               </FormDescription>
               <FormMessage />
@@ -113,7 +143,7 @@ export function UrlsAndRoutingSettingsForm() {
           )}
         />
 
-         <FormField
+        <FormField
           control={form.control}
           name="enableCanonical"
           render={({ field }) => (
@@ -137,9 +167,9 @@ export function UrlsAndRoutingSettingsForm() {
         />
 
         <div className="flex justify-end pt-4">
-            <Button type="submit">
-                Save Changes
-            </Button>
+          <Button type="submit">
+            Save Changes
+          </Button>
         </div>
       </form>
     </Form>
