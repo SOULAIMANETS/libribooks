@@ -153,7 +153,7 @@ export default function BooksDashboardPage() {
             console.error('Error adding book:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to add the book.',
+                description: error instanceof Error ? error.message : 'Failed to add the book.',
                 variant: 'destructive',
             });
         }
@@ -176,7 +176,7 @@ export default function BooksDashboardPage() {
             console.error('Error updating book:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to update the book.',
+                description: error instanceof Error ? error.message : 'Failed to update the book.',
                 variant: 'destructive',
             });
         }

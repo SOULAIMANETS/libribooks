@@ -55,9 +55,9 @@ export function ImageUpload({ name, label, currentValue, bucket = 'libribooks', 
 
         setValue(name, publicUrl, { shouldValidate: true, shouldDirty: true });
         setPreview(publicUrl);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading image:', error);
-        alert('Error uploading image');
+        alert(`Error uploading image: ${error.message || 'Unknown error'}`);
       } finally {
         setIsUploading(false);
       }

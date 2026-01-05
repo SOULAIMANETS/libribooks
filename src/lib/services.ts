@@ -58,6 +58,10 @@ export const bookService = {
             .eq('name', book.category)
             .single();
 
+        if (!categoryData) {
+            throw new Error(`Category "${book.category}" not found. Please ensure the database is seeded with categories.`);
+        }
+
         const { data, error } = await supabase
             .from('books')
             .insert({
