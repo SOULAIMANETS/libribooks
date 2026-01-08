@@ -45,7 +45,7 @@ export default async function ContactPage() {
             <ContactForm />
           </div>
           <div className="space-y-8">
-            <h2 className="text-2xl font-headline font-bold">Contact Information</h2>
+            <h2 className="text-2xl font-headline font-bold">Contact Details</h2>
             <div className="flex items-center gap-4">
               <div className="bg-primary/10 p-3 rounded-full">
                 <Mail className="h-6 w-6 text-primary" />
