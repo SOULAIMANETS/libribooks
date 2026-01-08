@@ -79,6 +79,13 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} libribooks.com. All rights reserved.
           </p>
+          {settings.footerCreditsText && settings.footerCreditsUrl && (
+            <p className="text-xs text-muted-foreground mt-2">
+              <Link href={settings.footerCreditsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                {settings.footerCreditsText}
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </footer>

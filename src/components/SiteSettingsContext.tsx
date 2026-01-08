@@ -8,6 +8,8 @@ type SiteSettings = {
     tagline?: string;
     heroSubtitle?: string;
     footerDescription?: string;
+    footerCreditsText?: string;
+    footerCreditsUrl?: string;
     logoUrl?: string;
     faviconUrl?: string;
     supportEmail?: string;

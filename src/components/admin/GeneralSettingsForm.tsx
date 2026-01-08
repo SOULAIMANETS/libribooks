@@ -27,6 +27,8 @@ const formSchema = z.object({
   tagline: z.string().optional(),
   heroSubtitle: z.string().optional(),
   footerDescription: z.string().optional(),
+  footerCreditsText: z.string().optional(),
+  footerCreditsUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   supportEmail: z.string().email({ message: "Please enter a valid email address." }),
   logoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   faviconUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
@@ -50,6 +52,8 @@ export function GeneralSettingsForm() {
     tagline: "Your friendly corner of the internet for discovering amazing books.",
     heroSubtitle: "Explore our collection or search for your next favorite read.",
     footerDescription: "Your friendly corner of the internet for discovering amazing books and sharing the love of reading.",
+    footerCreditsText: "",
+    footerCreditsUrl: "",
     supportEmail: "hello@libribooks.com",
     logoUrl: "",
     faviconUrl: "",
@@ -171,6 +175,38 @@ export function GeneralSettingsForm() {
               </FormItem>
             )}
           />
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Footer Credits</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={formMethods.control}
+                name="footerCreditsText"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Credits Text</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Developed by Your Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="footerCreditsUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Credits URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://yourwebsite.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Social Media Links</h3>
