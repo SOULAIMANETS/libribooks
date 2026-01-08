@@ -31,9 +31,10 @@ allBooks: Book[];
 authors: Author[];
 faqItems: { question: string; answer: string } [];
 tagline ?: string;
+heroSubtitle ?: string;
 }
 
-export default function HomeClient({ allBooks, authors, faqItems, tagline }: HomeClientProps) {
+export default function HomeClient({ allBooks, authors, faqItems, tagline, heroSubtitle }: HomeClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -76,7 +77,7 @@ export default function HomeClient({ allBooks, authors, faqItems, tagline }: Hom
             {tagline || "Your Next Literary Adventure"}
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Explore our collection or search for your next favorite read.
+            {heroSubtitle || "Explore our collection or search for your next favorite read."}
           </p>
         </section>
 

@@ -25,9 +25,17 @@ import { settingsService } from "@/lib/services";
 const formSchema = z.object({
   siteName: z.string().min(2, { message: "Site name must be at least 2 characters." }),
   tagline: z.string().optional(),
+  heroSubtitle: z.string().optional(),
+  footerDescription: z.string().optional(),
   supportEmail: z.string().email({ message: "Please enter a valid email address." }),
   logoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   faviconUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  socialLinks: z.object({
+    twitter: z.string().url().optional().or(z.literal('')),
+    facebook: z.string().url().optional().or(z.literal('')),
+    pinterest: z.string().url().optional().or(z.literal('')),
+    youtube: z.string().url().optional().or(z.literal('')),
+  }).optional(),
 });
 
 type GeneralSettingsFormValues = z.infer<typeof formSchema>;
@@ -40,9 +48,17 @@ export function GeneralSettingsForm() {
   const defaultValues = {
     siteName: "libribooks.com",
     tagline: "Your friendly corner of the internet for discovering amazing books.",
+    heroSubtitle: "Explore our collection or search for your next favorite read.",
+    footerDescription: "Your friendly corner of the internet for discovering amazing books and sharing the love of reading.",
     supportEmail: "hello@libribooks.com",
     logoUrl: "",
     faviconUrl: "",
+    socialLinks: {
+      twitter: "",
+      facebook: "",
+      pinterest: "",
+      youtube: "",
+    }
   };
 
   const formMethods = useForm<GeneralSettingsFormValues>({
@@ -109,17 +125,104 @@ export function GeneralSettingsForm() {
             name="tagline"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tagline</FormLabel>
+                <FormLabel>Hero Title (Tagline)</FormLabel>
                 <FormControl>
                   <Input placeholder="A short, catchy description" {...field} />
                 </FormControl>
                 <FormDescription>
-                  A short, catchy description of your website.
+                  This will be displayed as the main title on the homepage.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <FormField
+            control={formMethods.control}
+            name="heroSubtitle"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hero Subtitle</FormLabel>
+                <FormControl>
+                  <Input placeholder="Subtitle below the main title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={formMethods.control}
+            name="footerDescription"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Footer Description</FormLabel>
+                <FormControl>
+                  <Input placeholder="Description shown in the footer" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Social Media Links</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={formMethods.control}
+                name="socialLinks.twitter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Twitter URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://twitter.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="socialLinks.facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Facebook URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://facebook.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="socialLinks.pinterest"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pinterest URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://pinterest.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="socialLinks.youtube"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>YouTube URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://youtube.com/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
           <FormField
             control={formMethods.control}
             name="supportEmail"

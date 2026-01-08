@@ -16,6 +16,7 @@ export default async function Home() {
       authors={authors}
       faqItems={faqItems}
       tagline={settings?.tagline}
+      heroSubtitle={settings?.heroSubtitle}
     />
   );
 }

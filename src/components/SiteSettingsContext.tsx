@@ -6,9 +6,17 @@ import React, { createContext, useContext, ReactNode } from 'react';
 type SiteSettings = {
     siteName: string;
     tagline?: string;
+    heroSubtitle?: string;
+    footerDescription?: string;
     logoUrl?: string;
     faviconUrl?: string;
     supportEmail?: string;
+    socialLinks?: {
+        twitter?: string;
+        facebook?: string;
+        pinterest?: string;
+        youtube?: string;
+    };
 }
 
 const SiteSettingsContext = createContext<SiteSettings>({
