@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Book, Author, Article, Category, Tag, Page, PopupAd } from './types';
+import type { Book, Author, Article, Category, Tag, Page, PopupAd, Message } from './types';
 
 export const bookService = {
     async getAll(): Promise<Book[]> {
@@ -503,5 +503,45 @@ export const settingsService = {
 
         if (error) throw error;
         return data.value;
+    }
+};
+
+export const messagesService = {
+    async getAll(): Promise<Message[]> {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    async getUnreadCount(): Promise<number> {
+        const { count, error } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_read', false);
+
+        if (error) throw error;
+        return count || 0;
+    },
+
+    async markAsRead(id: number): Promise<void> {
+        const { error } = await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('id', id);
+
+        if (error) throw error;
+    },
+
+    async delete(id: number): Promise<void> {
+        const { error } = await supabase
+            .from('messages')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

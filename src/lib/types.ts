@@ -51,20 +51,29 @@ export interface Page {
 }
 
 export interface Category {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }
 
 export interface Tag {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }
 
 export interface PopupAd {
-  id: number;
+  id?: number;
   name: string;
   content: string;
   displayDelay: number; // in seconds
   displayDuration: number; // in seconds
   isActive: boolean;
+}
+
+export interface Message {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
 }

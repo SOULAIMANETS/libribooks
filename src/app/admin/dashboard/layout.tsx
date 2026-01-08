@@ -19,6 +19,7 @@ import {
   Tag,
   MessageSquare,
   LogOut,
+  Mail,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -45,6 +46,7 @@ const menuItems = [
   { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy },
   { href: '/admin/dashboard/authors', label: 'Authors', icon: Users },
   { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText },
+  { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail },
   { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark },
   { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag },
   { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare },
