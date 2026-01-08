@@ -98,6 +98,7 @@ export function ImageUpload({ name, label, currentValue, bucket = 'libribooks', 
           <div className="relative aspect-video w-full">
             <Image src={preview} alt="Image preview" fill className="object-contain" />
             <button
+              type="button"
               onClick={removeImage}
               className="absolute top-2 right-2 bg-background/50 backdrop-blur-sm rounded-full p-1 text-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
               aria-label="Remove image"
@@ -115,6 +116,22 @@ export function ImageUpload({ name, label, currentValue, bucket = 'libribooks', 
           </div>
         )}
       </div>
+      {!preview && (
+        <div className="mt-2">
+          <p className="text-xs text-muted-foreground mb-1 text-center">- OR -</p>
+          <input
+            type="text"
+            placeholder="Enter image URL manually..."
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(e) => {
+              const url = e.target.value;
+              if (url) {
+                setValue(name, url, { shouldValidate: true, shouldDirty: true });
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
