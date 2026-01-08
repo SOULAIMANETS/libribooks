@@ -71,7 +71,14 @@ export function GeneralSettingsForm() {
       try {
         const settings = await settingsService.get('general');
         if (settings) {
-          formMethods.reset(settings);
+          formMethods.reset({
+            ...defaultValues,
+            ...settings,
+            socialLinks: {
+              ...defaultValues.socialLinks,
+              ...(settings.socialLinks || {}),
+            }
+          });
         }
       } catch (error) {
         console.error("Failed to fetch settings:", error);
