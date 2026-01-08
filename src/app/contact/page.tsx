@@ -3,7 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ContactForm } from '@/components/ContactForm';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { Metadata } from 'next';
-import { pageService } from '@/lib/services';
+import { pageService, settingsService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ContactPage() {
   const pageData = await pageService.getBySlug('contact');
+  const settings = await settingsService.get('general');
 
   if (!pageData) {
     notFound();
@@ -48,29 +49,35 @@ export default async function ContactPage() {
               </div>
               <div>
                 <h3 className="font-semibold">Email</h3>
-                <a href="mailto:hello@libribooks.com" className="text-muted-foreground hover:text-primary transition-colors">
-                  hello@libribooks.com
+                <a href={`mailto:${settings?.supportEmail || 'hello@libribooks.com'}`} className="text-muted-foreground hover:text-primary transition-colors">
+                  {settings?.supportEmail || 'hello@libribooks.com'}
                 </a>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Phone className="h-6 w-6 text-primary" />
+
+            {settings?.phoneNumber && (
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Phone className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Phone</h3>
+                  <p className="text-muted-foreground">{settings.phoneNumber}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Phone</h3>
-                <p className="text-muted-foreground">+1 (555) 123-4567</p>
+            )}
+
+            {settings?.location && (
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <MapPin className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Office</h3>
+                  <p className="text-muted-foreground">{settings.location}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <MapPin className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Office</h3>
-                <p className="text-muted-foreground">123 Bookworm Lane, Readington, RS 45678</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

@@ -10,6 +10,8 @@ type SiteSettings = {
     footerDescription?: string;
     footerCreditsText?: string;
     footerCreditsUrl?: string;
+    phoneNumber?: string;
+    location?: string;
     logoUrl?: string;
     faviconUrl?: string;
     supportEmail?: string;

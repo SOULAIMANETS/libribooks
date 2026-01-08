@@ -29,6 +29,8 @@ const formSchema = z.object({
   footerDescription: z.string().optional(),
   footerCreditsText: z.string().optional(),
   footerCreditsUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  phoneNumber: z.string().optional(),
+  location: z.string().optional(),
   supportEmail: z.string().email({ message: "Please enter a valid email address." }),
   logoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   faviconUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
@@ -54,6 +56,8 @@ export function GeneralSettingsForm() {
     footerDescription: "Your friendly corner of the internet for discovering amazing books and sharing the love of reading.",
     footerCreditsText: "",
     footerCreditsUrl: "",
+    phoneNumber: "",
+    location: "",
     supportEmail: "hello@libribooks.com",
     logoUrl: "",
     faviconUrl: "",
@@ -200,6 +204,38 @@ export function GeneralSettingsForm() {
                     <FormLabel>Credits URL</FormLabel>
                     <FormControl>
                       <Input placeholder="https://yourwebsite.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={formMethods.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 (555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formMethods.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location / Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123 Bookworm Lane, Readington" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
