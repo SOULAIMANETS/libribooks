@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   description: 'Explore our collection of articles on literature, reading habits, and the world of books.',
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ArticlesPage() {
   const articles = await articleService.getAll();
   return (
