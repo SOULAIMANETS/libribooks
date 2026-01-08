@@ -99,7 +99,11 @@ export default function ArticlesDashboardPage() {
 
     const addArticle = async (article: Omit<Article, 'slug'>) => {
         try {
-            const slug = article.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+            const slug = article.title.toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^\p{L}\p{N}-]+/gu, '') // Keep Unicode letters and numbers
+                || `article-${Date.now()}`; // Fallback if slug becomes empty
             await articleService.create({ ...article, slug });
             await fetchArticles();
             setAddArticleOpen(false);
