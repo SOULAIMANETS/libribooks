@@ -27,11 +27,12 @@ import { JsonLd } from 'react-schemaorg';
 import { FAQPage, Question } from 'schema-dts';
 import type { Book, Author } from '@/lib/types';
 
-allBooks: Book[];
-authors: Author[];
-faqItems: { question: string; answer: string } [];
-tagline ?: string;
-heroSubtitle ?: string;
+interface HomeClientProps {
+  allBooks: Book[];
+  authors: Author[];
+  faqItems: { question: string; answer: string }[];
+  tagline?: string;
+  heroSubtitle?: string;
 }
 
 export default function HomeClient({ allBooks, authors, faqItems, tagline, heroSubtitle }: HomeClientProps) {
