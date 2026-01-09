@@ -38,6 +38,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { messagesService } from '@/lib/services';
 import type { Message } from '@/lib/types';
 import { format } from 'date-fns';
@@ -49,6 +57,7 @@ export default function InboxPage() {
     const [isLoading, setIsLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [deletingMessage, setDeletingMessage] = React.useState<Message | null>(null);
+    const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
     const { toast } = useToast();
 
     const fetchMessages = React.useCallback(async () => {
@@ -146,9 +155,11 @@ export default function InboxPage() {
             accessorKey: 'message',
             header: 'Message',
             cell: ({ row }) => (
-                <p className="line-clamp-2 max-w-md text-sm text-muted-foreground">
-                    {row.getValue('message')}
-                </p>
+                <div className="text-muted-foreground">
+                    <p className="line-clamp-2 max-w-md text-sm">
+                        {row.getValue('message')}
+                    </p>
+                </div>
             ),
         },
         {
@@ -167,28 +178,33 @@ export default function InboxPage() {
             cell: ({ row }) => {
                 const message = row.original;
                 return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => toggleReadStatus(message)}>
-                                {message.is_read ? 'Mark as Unread' : 'Mark as Read'}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => setDeletingMessage(message)}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Message
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => toggleReadStatus(message)}>
+                                    {message.is_read ? 'Mark as Unread' : 'Mark as Read'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSelectedMessage(message)}>
+                                    View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => setDeletingMessage(message)}
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Message
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 )
             },
         },
@@ -250,6 +266,41 @@ export default function InboxPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
+            <Dialog open={!!selectedMessage} onOpenChange={(isOpen) => !isOpen && setSelectedMessage(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Message Details</DialogTitle>
+                        <DialogDescription>
+                            Received on {selectedMessage && format(new Date(selectedMessage.created_at), 'MMMM d, yyyy h:mm a')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedMessage && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <span className="font-semibold">From:</span>
+                                <span className="col-span-3">{selectedMessage.name}</span>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <span className="font-semibold">Email:</span>
+                                <span className="col-span-3">{selectedMessage.email}</span>
+                            </div>
+                            <div className="space-y-2">
+                                <span className="font-semibold">Message:</span>
+                                <div className="rounded-md bg-muted p-4 text-sm whitespace-pre-wrap">
+                                    {selectedMessage.message}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => toggleReadStatus(selectedMessage!)}>
+                            {selectedMessage?.is_read ? 'Mark as Unread' : 'Mark as Read'}
+                        </Button>
+                        <Button onClick={() => setSelectedMessage(null)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -274,7 +325,8 @@ export default function InboxPage() {
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && 'selected'}
-                                    className={!row.original.is_read ? 'bg-muted/30' : ''}
+                                    className={`${!row.original.is_read ? 'bg-muted/30' : ''} cursor-pointer hover:bg-muted/50`}
+                                    onClick={() => setSelectedMessage(row.original)}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
