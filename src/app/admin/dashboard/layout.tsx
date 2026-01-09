@@ -96,30 +96,9 @@ export default function DashboardLayout({
     checkUserRole();
   }, [router]);
 
-  // Protect routes
+  // Permissions checks removed - all authenticated users have access to admin components
   useEffect(() => {
-    if (!role || loading) return;
-
-    // Check if current path is restricted
-    const restrictedPathsForEditor = [
-      '/admin/dashboard/users',
-      '/admin/dashboard/settings',
-      '/admin/dashboard/inbox',
-      '/admin/dashboard/popups',
-      '/admin/dashboard/pages'
-    ];
-
-    if (role === 'editor') {
-      const isRestricted = restrictedPathsForEditor.some(path => pathname.startsWith(path));
-      if (isRestricted) {
-        toast({
-          title: "Access Denied",
-          description: "You do not have permission to access this page.",
-          variant: "destructive"
-        });
-        router.push('/admin/dashboard');
-      }
-    }
+    // Basic auth protection happens in checkUserRole and middleware
   }, [pathname, role, loading, router, toast]);
 
 
@@ -151,7 +130,8 @@ export default function DashboardLayout({
     );
   }
 
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'editor'));
+  // No role-based filtering - show all items to everyone
+  const filteredMenuItems = menuItems;
 
   return (
     <SidebarProvider>
@@ -187,20 +167,18 @@ export default function DashboardLayout({
           </SidebarContent>
           <SidebarFooter className="group-data-[collapsible=icon]:p-2">
             <SidebarMenu>
-              {role === 'admin' && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/admin/dashboard/settings'}
-                    tooltip={{ children: "Settings" }}
-                  >
-                    <Link href="/admin/dashboard/settings">
-                      <Settings />
-                      <span>Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/dashboard/settings'}
+                  tooltip={{ children: "Settings" }}
+                >
+                  <Link href="/admin/dashboard/settings">
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>

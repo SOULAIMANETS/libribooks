@@ -55,12 +55,7 @@ export default function LoginPage() {
                         description: 'Welcome back!',
                     });
 
-                    const role = (data.role || '').toLowerCase();
-                    if (role === 'editor') {
-                        router.push('/editor/dashboard');
-                    } else {
-                        router.push('/admin/dashboard');
-                    }
+                    router.push('/admin/dashboard');
                 } catch (e) {
                     console.error("Error fetching role", e);
                     // Fallback
