@@ -1,4 +1,5 @@
 
+
 'use client';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import React, { useEffect, useState } from 'react';
 
 import {
   SidebarProvider,
@@ -40,18 +42,19 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy },
-  { href: '/admin/dashboard/authors', label: 'Authors', icon: Users },
-  { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText },
-  { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail },
-  { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark },
-  { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag },
-  { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare },
-  { href: '/admin/dashboard/pages', label: 'Pages', icon: FilePenLine },
-  { href: '/admin/dashboard/users', label: 'Users', icon: Users2 },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: Home, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/authors', label: 'Authors', icon: Users, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag, roles: ['Admin', 'Editor'] },
+  { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail, roles: ['Admin'] },
+  { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare, roles: ['Admin'] },
+  { href: '/admin/dashboard/pages', label: 'Pages', icon: FilePenLine, roles: ['Admin'] },
+  { href: '/admin/dashboard/users', label: 'Users', icon: Users2, roles: ['Admin'] },
 ];
 
 export default function DashboardLayout({
@@ -62,6 +65,70 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const [role, setRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/admin/login');
+          return;
+        }
+
+        // Fetch user role from public.users table
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('email', user.email)
+          .single();
+
+        if (error || !userData) {
+          console.error('Error fetching user role:', error);
+          // Default to minimal access or handle error
+          setRole('Editor'); // Fallback safe assumption? or keep null
+          return;
+        }
+
+        setRole(userData.role);
+
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserRole();
+  }, [router]);
+
+  // Protect routes
+  useEffect(() => {
+    if (!role || loading) return;
+
+    // Check if current path is restricted
+    const restrictedPathsForEditor = [
+      '/admin/dashboard/users',
+      '/admin/dashboard/settings',
+      '/admin/dashboard/inbox',
+      '/admin/dashboard/popups',
+      '/admin/dashboard/pages'
+    ];
+
+    if (role === 'Editor') {
+      const isRestricted = restrictedPathsForEditor.some(path => pathname.startsWith(path));
+      if (isRestricted) {
+        toast({
+          title: "Access Denied",
+          description: "You do not have permission to access this page.",
+          variant: "destructive"
+        });
+        router.push('/admin/dashboard');
+      }
+    }
+  }, [pathname, role, loading, router, toast]);
+
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -83,6 +150,16 @@ export default function DashboardLayout({
     return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace('-', ' ');
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'Editor')); // Default to Editor view if role unknown to be safe, or hide all?
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
@@ -99,7 +176,7 @@ export default function DashboardLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
@@ -117,18 +194,20 @@ export default function DashboardLayout({
           </SidebarContent>
           <SidebarFooter className="group-data-[collapsible=icon]:p-2">
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/admin/dashboard/settings'}
-                  tooltip={{ children: "Settings" }}
-                >
-                  <Link href="/admin/dashboard/settings">
-                    <Settings />
-                    <span>Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {role === 'Admin' && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === '/admin/dashboard/settings'}
+                    tooltip={{ children: "Settings" }}
+                  >
+                    <Link href="/admin/dashboard/settings">
+                      <Settings />
+                      <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
@@ -139,7 +218,12 @@ export default function DashboardLayout({
               <SidebarTrigger className="md:hidden" />
               <h1 className="text-lg font-semibold">{getPageTitle(pathname)}</h1>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </header>
           <main className="flex-1 p-4 sm:p-6">{children}</main>
         </SidebarInset>
@@ -148,3 +232,4 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
