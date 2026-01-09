@@ -32,11 +32,16 @@ export async function GET(request: NextRequest) {
 
         if (error) {
             console.error('Error fetching user role:', error);
-            // If user not found in public table but is authenticated, handle gracefully?
-            return NextResponse.json({ role: 'Editor' }); // Default to safe role or return error?
+            return NextResponse.json({ error: 'Failed to fetch role' }, { status: 500 });
         }
 
-        return NextResponse.json({ role: profile?.role || 'Editor' });
+        if (!profile || !profile.role) {
+            console.log('User has no role in public.users, defaulting to potential Admin or handling as error');
+            // Returning 404 lets the frontend handle the fallback (e.g. valid Supabase user but no profile -> Admin)
+            return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ role: (profile.role || '').toLowerCase() });
 
     } catch (error) {
         console.error('Unexpected error in /api/auth/role:', error);

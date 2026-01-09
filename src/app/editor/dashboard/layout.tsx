@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
     LayoutDashboard,
     BookOpen,
     Users,
     FileText,
-    tag,
+    // tag - unused or typo, Tags is already imported
     LogOut,
     Menu,
     X,
@@ -71,7 +71,7 @@ export default function EditorDashboardLayout({
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                router.push('/admin/login');
+                router.push('/login');
                 return;
             }
 
@@ -80,13 +80,13 @@ export default function EditorDashboardLayout({
                 if (!profile || profile.role !== 'Editor') {
                     // If not editor, redirect to appropriate place or show error
                     // For now, let's redirect to admin login if they shouldn't be here
-                    router.push('/admin/login');
+                    router.push('/login');
                     return;
                 }
                 setUser(profile);
             } catch (e) {
                 console.error("Error fetching user profile", e);
-                router.push('/admin/login');
+                router.push('/login');
                 return;
             }
 
@@ -99,7 +99,7 @@ export default function EditorDashboardLayout({
     const handleSignOut = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
-        router.push('/admin/login');
+        router.push('/login');
     };
 
     if (loading) {

@@ -71,7 +71,7 @@ export default function DashboardLayout({
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          router.push('/admin/login');
+          router.push('/login');
           return;
         }
 
@@ -132,7 +132,7 @@ export default function DashboardLayout({
         variant: "destructive",
       });
     } else {
-      router.push('/admin/login');
+      router.push('/login');
     }
   };
 

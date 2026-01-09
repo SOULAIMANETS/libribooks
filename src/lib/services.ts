@@ -452,6 +452,12 @@ export const tagService = {
 };
 
 export const userService = {
+    async getByEmail(email: string): Promise<any> {
+        const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
+        if (error) return null;
+        return data;
+    },
+
     async getAll(): Promise<any[]> {
         const { data, error } = await supabase.from('users').select('*').order('name');
         if (error) throw error;

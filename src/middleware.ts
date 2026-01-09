@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
 
     // If user is not signed in and current path is /admin/dashboard/* or /editor/dashboard/*
     if (!user && (req.nextUrl.pathname.startsWith('/admin/dashboard') || req.nextUrl.pathname.startsWith('/editor/dashboard'))) {
-        return NextResponse.redirect(new URL('/admin/login', req.url));
+        return NextResponse.redirect(new URL('/login', req.url));
     }
 
     // Role-based redirection is better handled in the layout or page components 
