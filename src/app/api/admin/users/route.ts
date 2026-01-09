@@ -13,6 +13,14 @@ export async function POST(request: Request) {
             );
         }
 
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('SUPABASE_SERVICE_ROLE_KEY is missing');
+            return NextResponse.json(
+                { error: 'Server configuration error' },
+                { status: 500 }
+            );
+        }
+
         // Create a Supabase client with the SERVICE_ROLE key to manage users
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,8 +59,8 @@ export async function POST(request: Request) {
         const { data: existingUser } = await supabaseAdmin
             .from('users')
             .select('*')
-            .eq('email', email) // Assuming id matches, or use email
-            .single();
+            .eq('email', email)
+            .maybeSingle();
 
         let userError;
 
