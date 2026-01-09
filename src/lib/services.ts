@@ -459,9 +459,20 @@ export const userService = {
     },
 
     async create(user: any): Promise<any> {
-        const { data, error } = await supabase.from('users').insert(user).select().single();
-        if (error) throw error;
-        return data;
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(user),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to create user');
+        }
+
+        return await response.json();
     },
 
     async update(id: number, user: any): Promise<any> {

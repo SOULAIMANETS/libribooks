@@ -6,14 +6,14 @@ export async function middleware(req: NextRequest) {
     const { supabaseResponse, user } = await updateSession(req);
 
     // If user is signed in and current path is /admin/login, redirect to /admin/dashboard
-    if (user && req.nextUrl.pathname === '/admin/login') {
-        return NextResponse.redirect(new URL('/admin/dashboard', req.url));
-    }
+    // if (user && req.nextUrl.pathname === '/admin/login') {
+    //     return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+    // }
 
     // If user is not signed in and current path is /admin/dashboard/*, redirect to /admin/login
-    if (!user && req.nextUrl.pathname.startsWith('/admin/dashboard')) {
-        return NextResponse.redirect(new URL('/admin/login', req.url));
-    }
+    // if (!user && req.nextUrl.pathname.startsWith('/admin/dashboard')) {
+    //     return NextResponse.redirect(new URL('/admin/login', req.url));
+    // }
 
     return supabaseResponse;
 }
