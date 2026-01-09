@@ -17,7 +17,14 @@ DROP POLICY IF EXISTS "Enable full access for authenticated users" ON public.set
 CREATE POLICY "Enable read access for all users" ON public.settings
 FOR SELECT USING (true);
 
--- 4. Create Policy: Allow Authenticated Users to Edit
--- (Any user validly logged in via Supabase Auth can change settings)
-CREATE POLICY "Enable full access for authenticated users" ON public.settings
-FOR ALL USING (auth.role() = 'authenticated');
+-- 4. Create Policy: Allow Authenticated Users to Insert
+CREATE POLICY "Enable insert for authenticated users" ON public.settings
+FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- 5. Create Policy: Allow Authenticated Users to Update
+CREATE POLICY "Enable update for authenticated users" ON public.settings
+FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+-- 6. Create Policy: Allow Authenticated Users to Delete
+CREATE POLICY "Enable delete for authenticated users" ON public.settings
+FOR DELETE USING (auth.role() = 'authenticated');
