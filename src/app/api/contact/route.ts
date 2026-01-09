@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create Supabase client (use anon key for public insertion)
+        // Create Supabase client (use service role key for bypass RLS)
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
         // Insert message into database
@@ -33,9 +33,18 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            console.error('Error saving message:', error);
+            console.error('Supabase error saving message:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint
+            });
             return NextResponse.json(
-                { error: 'Failed to save message' },
+                {
+                    error: 'Failed to save message',
+                    details: error.message,
+                    code: error.code
+                },
                 { status: 500 }
             );
         }
@@ -44,10 +53,10 @@ export async function POST(request: NextRequest) {
             { success: true, data },
             { status: 201 }
         );
-    } catch (error) {
-        console.error('Unexpected error:', error);
+    } catch (error: any) {
+        console.error('Unexpected error in contact API:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', message: error?.message },
             { status: 500 }
         );
     }
