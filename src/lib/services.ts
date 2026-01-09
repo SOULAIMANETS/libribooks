@@ -482,16 +482,34 @@ export const userService = {
     },
 
     async update(id: number, user: any): Promise<any> {
-        const { data, error } = await supabase.from('users').update(user).eq('id', id).select().single();
-        if (error) throw error;
-        return data;
+        const response = await fetch('/api/admin/users', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id, ...user }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update user');
+        }
+
+        return await response.json();
     },
 
     async delete(id: number): Promise<void> {
-        const { error } = await supabase.from('users').delete().eq('id', id);
-        if (error) throw error;
+        const response = await fetch(`/api/admin/users?id=${id}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete user');
+        }
     }
 };
+
 
 export const settingsService = {
     async get(key: string): Promise<any> {

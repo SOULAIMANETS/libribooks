@@ -29,8 +29,9 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
   role: z.enum(["Admin", "Editor"]),
-  password: z.string().optional(),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }).optional().or(z.literal("")),
 });
+
 
 type UserFormValues = z.infer<typeof formSchema>;
 
@@ -96,21 +97,20 @@ export function UserForm({ initialData, onSubmit, onSuccess }: UserFormProps) {
         {/* Only show password field for new users or if we want to allow password updates (which is complex with Supabase Auth admin API, usually separate flow) 
             For now, let's only allow setting it on creation.
         */}
-        {!initialData && (
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input placeholder="******" type="password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password {initialData && "(Leave blank to keep current)"}</FormLabel>
+              <FormControl>
+                <Input placeholder="******" type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
 
         <FormField
           control={form.control}
