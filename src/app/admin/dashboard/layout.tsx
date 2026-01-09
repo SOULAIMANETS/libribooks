@@ -43,16 +43,16 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 const menuItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: Home, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/authors', label: 'Authors', icon: Users, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag, roles: ['Admin', 'Editor'] },
-  { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail, roles: ['Admin'] },
-  { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare, roles: ['Admin'] },
-  { href: '/admin/dashboard/pages', label: 'Pages', icon: FilePenLine, roles: ['Admin'] },
-  { href: '/admin/dashboard/users', label: 'Users', icon: Users2, roles: ['Admin'] },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: Home, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/authors', label: 'Authors', icon: Users, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail, roles: ['admin'] },
+  { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare, roles: ['admin'] },
+  { href: '/admin/dashboard/pages', label: 'Pages', icon: FilePenLine, roles: ['admin'] },
+  { href: '/admin/dashboard/users', label: 'Users', icon: Users2, roles: ['admin'] },
 ];
 
 export default function DashboardLayout({
@@ -109,7 +109,7 @@ export default function DashboardLayout({
       '/admin/dashboard/pages'
     ];
 
-    if (role === 'Editor') {
+    if (role === 'editor') {
       const isRestricted = restrictedPathsForEditor.some(path => pathname.startsWith(path));
       if (isRestricted) {
         toast({
@@ -151,7 +151,7 @@ export default function DashboardLayout({
     );
   }
 
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'Editor'));
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'editor'));
 
   return (
     <SidebarProvider>
@@ -187,7 +187,7 @@ export default function DashboardLayout({
           </SidebarContent>
           <SidebarFooter className="group-data-[collapsible=icon]:p-2">
             <SidebarMenu>
-              {role === 'Admin' && (
+              {role === 'admin' && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild

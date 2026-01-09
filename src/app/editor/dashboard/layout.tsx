@@ -77,7 +77,7 @@ export default function EditorDashboardLayout({
 
             try {
                 const profile = await userService.getByEmail(user.email!);
-                if (!profile || profile.role !== 'Editor') {
+                if (!profile || (profile.role || '').toLowerCase() !== 'editor') {
                     // If not editor, redirect to appropriate place or show error
                     // For now, let's redirect to admin login if they shouldn't be here
                     router.push('/login');
