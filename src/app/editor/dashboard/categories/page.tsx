@@ -2,6 +2,6 @@
 
 import { CategoriesTable } from '@/components/dashboard/CategoriesTable';
 
-export default function CategoriesDashboardPage() {
+export default function EditorCategoriesPage() {
     return <CategoriesTable />;
 }

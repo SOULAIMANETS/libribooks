@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -31,7 +30,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -42,12 +41,30 @@ export default function LoginPage() {
           description: error.message,
           variant: 'destructive',
         });
-      } else {
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back!',
-        });
-        router.push('/admin/dashboard');
+        return;
+      }
+
+      if (user) {
+        // Fetch user role from API which bypasses RLS
+        try {
+          const response = await fetch('/api/auth/role');
+          const data = await response.json();
+
+          toast({
+            title: 'Login Successful',
+            description: 'Welcome back!',
+          });
+
+          if (data.role === 'Editor') {
+            router.push('/editor/dashboard');
+          } else {
+            router.push('/admin/dashboard');
+          }
+        } catch (e) {
+          console.error("Error fetching role", e);
+          // Fallback
+          router.push('/admin/dashboard');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);

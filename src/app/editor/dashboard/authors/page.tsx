@@ -2,6 +2,6 @@
 
 import { AuthorsTable } from '@/components/dashboard/AuthorsTable';
 
-export default function AuthorsDashboardPage() {
+export default function EditorAuthorsPage() {
     return <AuthorsTable />;
 }

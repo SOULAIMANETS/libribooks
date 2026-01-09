@@ -2,6 +2,6 @@
 
 import { TagsTable } from '@/components/dashboard/TagsTable';
 
-export default function TagsDashboardPage() {
+export default function EditorTagsPage() {
     return <TagsTable />;
 }

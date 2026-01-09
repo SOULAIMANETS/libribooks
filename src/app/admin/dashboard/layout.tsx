@@ -1,5 +1,3 @@
-
-
 'use client';
 
 export const dynamic = 'force-dynamic';
@@ -77,21 +75,16 @@ export default function DashboardLayout({
           return;
         }
 
-        // Fetch user role from public.users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('role')
-          .eq('email', user.email)
-          .single();
+        // Fetch user role from API which bypasses RLS
+        const response = await fetch('/api/auth/role');
+        const data = await response.json();
 
-        if (error || !userData) {
-          console.error('Error fetching user role:', error);
-          // Default to minimal access or handle error
-          setRole('Editor'); // Fallback safe assumption? or keep null
-          return;
+        if (response.ok && data.role) {
+          setRole(data.role);
+        } else {
+          console.error('Failed to fetch role via API', data);
+          setRole('Editor'); // Fallback
         }
-
-        setRole(userData.role);
 
       } catch (error) {
         console.error('Error checking auth:', error);
@@ -158,7 +151,7 @@ export default function DashboardLayout({
     );
   }
 
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'Editor')); // Default to Editor view if role unknown to be safe, or hide all?
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(role || 'Editor'));
 
   return (
     <SidebarProvider>
@@ -232,4 +225,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
