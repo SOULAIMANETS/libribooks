@@ -27,6 +27,7 @@ const formSchema = z.object({
   defaultTitle: z.string().min(2, { message: "Default title must be at least 2 characters." }),
   metaDescription: z.string().max(160, { message: "Description should be 160 characters or less." }).optional(),
   globalKeywords: z.string().optional(),
+  googleSiteVerification: z.string().optional(),
   enableSchema: z.boolean().default(true),
 });
 
@@ -41,6 +42,7 @@ export function SeoSettingsForm() {
     defaultTitle: "libribooks.com | Your Next Literary Adventure",
     metaDescription: "Discover your next favorite book with our insightful reviews, articles, and author interviews.",
     globalKeywords: "book reviews, literature, fiction, non-fiction, author interviews",
+    googleSiteVerification: "",
     enableSchema: true,
   }
 
@@ -132,6 +134,22 @@ export function SeoSettingsForm() {
               </FormControl>
               <FormDescription>
                 Comma-separated keywords that describe your site's content.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="googleSiteVerification"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Google Site Verification</FormLabel>
+              <FormControl>
+                <Input placeholder="Your Google Search Console verification code" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter your Google Search Console verification code (the content value from the meta tag).
               </FormDescription>
               <FormMessage />
             </FormItem>

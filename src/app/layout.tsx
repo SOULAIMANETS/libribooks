@@ -112,6 +112,9 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: siteConfig.favicon,
     },
+    verification: seoSettings?.googleSiteVerification ? {
+      google: seoSettings.googleSiteVerification,
+    } : undefined,
   };
 }
 
