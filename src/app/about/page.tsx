@@ -7,6 +7,8 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'About Us',
   description: 'Learn more about the mission and story behind libribooks.com, your friendly corner of the internet for discovering amazing books.',

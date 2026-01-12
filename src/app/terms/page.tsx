@@ -4,6 +4,8 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const pageData = await pageService.getBySlug('terms');
