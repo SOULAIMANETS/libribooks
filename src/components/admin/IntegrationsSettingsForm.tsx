@@ -25,6 +25,7 @@ import { settingsService } from "@/lib/services";
 
 const formSchema = z.object({
   googleAnalyticsId: z.string().optional(),
+  googleTagManagerId: z.string().optional(),
   facebookPixelId: z.string().optional(),
   customApiKey: z.string().optional(),
 });
@@ -38,6 +39,7 @@ export function IntegrationsSettingsForm() {
 
   const defaultValues = {
     googleAnalyticsId: "",
+    googleTagManagerId: "",
     facebookPixelId: "",
     customApiKey: "",
   }
@@ -111,6 +113,22 @@ export function IntegrationsSettingsForm() {
                   </FormControl>
                   <FormDescription>
                     Your Google Analytics 4 measurement ID.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="googleTagManagerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Google Tag Manager ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="GTM-XXXXXXX" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Your Google Tag Manager container ID.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

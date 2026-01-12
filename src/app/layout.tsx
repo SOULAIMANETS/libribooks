@@ -11,6 +11,7 @@ import { appearanceSettings } from '@/lib/siteConfig';
 import { PopupContainer } from '@/components/PopupContainer';
 import { popupAdService, settingsService } from '@/lib/services';
 import { SiteSettingsProvider } from '@/components/SiteSettingsContext';
+import Script from 'next/script';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -65,9 +66,10 @@ const headlineFont = fontMapper[appearanceSettings.headlineFont as keyof typeof 
 const bodyFont = fontMapper[appearanceSettings.bodyFont as keyof typeof fontMapper];
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [settings, seoSettings] = await Promise.all([
+  const [settings, seoSettings, integrations] = await Promise.all([
     settingsService.get('general'),
-    settingsService.get('seo')
+    settingsService.get('seo'),
+    settingsService.get('integrations')
   ]);
 
   const siteConfig = {
@@ -123,10 +125,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [activeAds, settings, seoSettings] = await Promise.all([
+  const [activeAds, settings, seoSettings, integrations] = await Promise.all([
     popupAdService.getActive(),
     settingsService.get('general'),
-    settingsService.get('seo')
+    settingsService.get('seo'),
+    settingsService.get('integrations')
   ]);
 
   const siteSettings = settings || { siteName: 'libribooks.com' };
@@ -150,8 +153,42 @@ export default async function RootLayout({
             }}
           />
         )}
+        {integrations?.googleTagManagerId && (
+          <Script id="gtm-script" strategy="afterInteractive">
+            {`
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','${integrations.googleTagManagerId}');
+            `}
+          </Script>
+        )}
+        {integrations?.googleAnalyticsId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${integrations.googleAnalyticsId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-script" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${integrations.googleAnalyticsId}');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body className={cn('font-body antialiased min-h-screen flex flex-col')}>
+        {integrations?.googleTagManagerId && (
+          <noscript
+            dangerouslySetInnerHTML={{
+              __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${integrations.googleTagManagerId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+            }}
+          />
+        )}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
