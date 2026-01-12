@@ -36,8 +36,9 @@ import {
 } from "@/components/ui/popover";
 import { ImageUpload } from "./ImageUpload";
 import { Separator } from "../ui/separator";
-import { ChevronsUpDown, Search } from "lucide-react";
+import { ChevronsUpDown, Search, Plus, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useFieldArray } from "react-hook-form";
 
 
 const formSchema = z.object({
@@ -56,6 +57,10 @@ const formSchema = z.object({
     message: "You have to select at least one tag.",
   }),
   quotes: z.string().optional(),
+  faq: z.array(z.object({
+    question: z.string().min(5, "Question is too short"),
+    answer: z.string().min(5, "Answer is too short"),
+  })).optional(),
 });
 
 type BookFormValues = z.infer<typeof formSchema>;
@@ -74,6 +79,7 @@ const defaultFormValues = {
   },
   tags: [],
   quotes: "",
+  faq: [],
 };
 
 interface BookFormProps {
@@ -120,12 +126,18 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
       authors: Array.isArray(initialData.authors) ? initialData.authors : [],
       tags: initialData.tags || [],
       quotes: initialData.quotes?.join("\n") || "",
+      faq: initialData.faq || [],
       purchaseUrls: {
         paperback: initialData.purchaseUrls?.paperback || "",
         audiobook: initialData.purchaseUrls?.audiobook || "",
         ebook: initialData.purchaseUrls?.ebook || "",
       }
     } : defaultFormValues,
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: formMethods.control,
+    name: "faq",
   });
 
   React.useEffect(() => {
@@ -135,6 +147,7 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
         authors: Array.isArray(initialData.authors) ? initialData.authors : [],
         tags: initialData.tags || [],
         quotes: initialData.quotes?.join("\n") || "",
+        faq: initialData.faq || [],
         purchaseUrls: {
           paperback: initialData.purchaseUrls?.paperback || "",
           audiobook: initialData.purchaseUrls?.audiobook || "",
@@ -469,6 +482,76 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
                   </FormItem>
                 )}
               />
+            </div>
+          </div>
+
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Book FAQ</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ question: "", answer: "" })}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add FAQ
+              </Button>
+            </div>
+            <FormDescription>
+              Add common questions and answers about this book for readers.
+            </FormDescription>
+
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <div key={field.id} className="space-y-4 p-4 border rounded-md relative group">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <FormField
+                    control={formMethods.control}
+                    name={`faq.${index}.question`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Question</FormLabel>
+                        <FormControl>
+                          <Input placeholder="What is the main theme of this book?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={formMethods.control}
+                    name={`faq.${index}.answer`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Answer</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="The main theme is..."
+                            rows={3}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+              {fields.length === 0 && (
+                <p className="text-sm text-center text-muted-foreground py-4 bg-muted/50 rounded-md border border-dashed">
+                  No FAQs added yet.
+                </p>
+              )}
             </div>
           </div>
 

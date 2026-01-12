@@ -23,7 +23,8 @@ export const bookService = {
             tags: book.tags.map((t: any) => t.tags.name),
             coverImage: book.cover_image_url,
             purchaseUrls: book.purchase_urls,
-            slug: book.slug || book.id.toString()
+            slug: book.slug || book.id.toString(),
+            faq: book.faq
         }));
     },
 
@@ -49,7 +50,8 @@ export const bookService = {
             tags: data.tags.map((t: any) => t.tags.name),
             coverImage: data.cover_image_url,
             purchaseUrls: data.purchase_urls,
-            slug: data.slug || data.id.toString()
+            slug: data.slug || data.id.toString(),
+            faq: data.faq
         };
     },
 
@@ -81,7 +83,8 @@ export const bookService = {
             tags: data.tags.map((t: any) => t.tags.name),
             coverImage: data.cover_image_url,
             purchaseUrls: data.purchase_urls,
-            slug: data.slug
+            slug: data.slug,
+            faq: data.faq
         };
     },
 
@@ -107,6 +110,7 @@ export const bookService = {
                 category_id: categoryData?.id,
                 quotes: book.quotes,
                 featured: book.featured,
+                faq: book.faq,
             })
             .select()
             .single();
@@ -139,6 +143,7 @@ export const bookService = {
         if (book.purchaseUrls !== undefined) updateData.purchase_urls = book.purchaseUrls;
         if (book.quotes !== undefined) updateData.quotes = book.quotes;
         if (book.featured !== undefined) updateData.featured = book.featured;
+        if (book.faq !== undefined) updateData.faq = book.faq;
 
         if (book.category) {
             const { data: categoryData } = await supabase
