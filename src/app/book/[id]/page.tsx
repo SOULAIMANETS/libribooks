@@ -36,10 +36,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const pageUrl = `/book/${book.id}`;
   const imageUrl = book.coverImage;
-  const description = `In-depth review and summary of ${book.title} by ${book.authors.join(', ')}. Discover key insights, notable quotes, and see if this ${book.category.toLowerCase()} book is your next life-changing read.`;
+  const authorNames = book.authors?.join(', ') || 'Unknown Author';
+  const categoryName = book.category?.toLowerCase() || 'book';
+  const description = `In-depth review and summary of ${book.title} by ${authorNames}. Discover key insights, notable quotes, and see if this ${categoryName} book is your next life-changing read.`;
 
   return {
-    title: `${book.title} by ${book.authors.join(', ')} | Book Review`,
+    title: `${book.title} by ${authorNames} | Book Review`,
     description: description,
     openGraph: {
       title: `${book.title} | libribooks.com`,
@@ -73,7 +75,7 @@ export default async function BookDetailPage({ params }: { params: { id: string 
   }
 
   const allAuthors = await authorService.getAll();
-  const bookAuthors = allAuthors.filter((a) => book.authorIds.includes(a.id));
+  const bookAuthors = allAuthors.filter((a) => book.authorIds?.includes(a.id));
 
   const allBooks = await bookService.getAll();
   const similarBooks = allBooks.filter(
@@ -144,23 +146,27 @@ export default async function BookDetailPage({ params }: { params: { id: string 
             </div>
           </div>
           <div className="md:col-span-2">
-            <Badge variant="secondary" className="mb-2">{book.category}</Badge>
+            {book.category && <Badge variant="secondary" className="mb-2">{book.category}</Badge>}
             <h1 className="text-4xl font-headline font-bold">{book.title}</h1>
             <div className="mt-2 text-xl text-muted-foreground flex items-center gap-2">
               by{' '}
-              {book.authors.map((author, index) => (
-                <React.Fragment key={book.authorIds[index]}>
-                  <Link href={`/author/${book.authorIds[index]}`} className="text-primary hover:underline">
-                    {author}
-                  </Link>
-                  {index < book.authors.length - 1 && <span>,</span>}
+              {book.authors?.map((author, index) => (
+                <React.Fragment key={book.authorIds?.[index] || index}>
+                  {book.authorIds?.[index] ? (
+                    <Link href={`/author/${book.authorIds[index]}`} className="text-primary hover:underline">
+                      {author}
+                    </Link>
+                  ) : (
+                    <span>{author}</span>
+                  )}
+                  {index < book.authors!.length - 1 && <span>,</span>}
                 </React.Fragment>
               ))}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap mt-4">
               <Tag className="w-4 h-4 text-muted-foreground" />
-              {book.tags.map((tag) => (
+              {book.tags?.map((tag) => (
                 <Badge key={tag} variant="outline" className="font-normal">
                   {tag}
                 </Badge>
