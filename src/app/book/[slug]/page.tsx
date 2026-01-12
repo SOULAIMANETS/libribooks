@@ -23,18 +23,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 export async function generateStaticParams() {
   const books = await bookService.getAll();
   return books.map((book) => ({
-    id: book.id.toString(),
+    slug: book.slug || book.id.toString(),
   }));
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const book = await bookService.getById(params.id);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const book = await bookService.getBySlug(params.slug);
 
   if (!book) {
     return {};
   }
 
-  const pageUrl = `/book/${book.id}`;
+  const pageUrl = `/book/${book.slug || book.id}`;
   const imageUrl = book.coverImage;
   const authorNames = book.authors?.join(', ') || 'Unknown Author';
   const categoryName = book.category?.toLowerCase() || 'book';
@@ -67,8 +67,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 
-export default async function BookDetailPage({ params }: { params: { id: string } }) {
-  const book = await bookService.getById(params.id);
+export default async function BookDetailPage({ params }: { params: { slug: string } }) {
+  const book = await bookService.getBySlug(params.slug);
 
   if (!book) {
     notFound();
@@ -82,7 +82,7 @@ export default async function BookDetailPage({ params }: { params: { id: string 
     (b) => b.category === book.category && b.id !== book.id
   ).slice(0, 3);
 
-  const pageUrl = `https://libribooks.com/book/${book.id}`;
+  const pageUrl = `https://libribooks.com/book/${book.slug || book.id}`;
 
   const schemaAuthors: Person[] = bookAuthors.map(author => ({
     '@type': 'Person',

@@ -9,7 +9,7 @@ interface BookCoverCardProps {
 
 export function BookCoverCard({ book }: BookCoverCardProps) {
   return (
-    <Link href={`/book/${book.id}`} className="block group">
+    <Link href={`/book/${book.slug || book.id}`} className="block group">
       <Card className="overflow-hidden transition-all duration-300 ease-in-out group-hover:shadow-2xl group-hover:scale-105 group-hover:-translate-y-1 border-2 border-transparent hover:border-primary">
         <CardContent className="p-0">
           <div className="relative aspect-[2/3] w-full">

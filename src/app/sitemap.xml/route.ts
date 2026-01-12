@@ -20,7 +20,7 @@ export async function GET() {
     authorService.getAll()
   ]);
 
-  const bookUrls = books.map(book => `/book/${book.id}`);
+  const bookUrls = books.map(book => `/book/${book.slug || book.id}`);
   const articleUrls = articles.map(article => `/articles/${article.slug}`);
   const authorUrls = authors.map(author => `/author/${author.id}`);
 
@@ -42,7 +42,7 @@ export async function GET() {
       .join('')}
       ${books.map(book => `
         <url>
-            <loc>${URL}/book/${book.id}</loc>
+            <loc>${URL}/book/${book.slug || book.id}</loc>
             <lastmod>${today}</lastmod>
             <image:image>
                 <image:loc>${book.coverImage}</image:loc>

@@ -2,6 +2,7 @@
 
 export interface Book {
   id: number;
+  slug: string;
   title: string;
   authorIds: number[];
   authors: string[];

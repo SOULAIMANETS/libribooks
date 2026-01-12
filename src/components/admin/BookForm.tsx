@@ -42,6 +42,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
+  slug: z.string().min(2, { message: "Slug must be at least 2 characters." }).regex(/^[a-z0-9-]+$/, { message: "Slug can only contain lowercase letters, numbers, and hyphens." }),
   authors: z.array(z.string()).min(1, { message: "Select at least one author." }),
   category: z.string().min(1, { message: "Please select a category." }),
   coverImage: z.string().min(1, { message: "Please upload an image." }),
@@ -61,6 +62,7 @@ type BookFormValues = z.infer<typeof formSchema>;
 
 const defaultFormValues = {
   title: "",
+  slug: "",
   authors: [],
   category: "",
   coverImage: "",
@@ -144,6 +146,16 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
     }
   }, [initialData, formMethods]);
 
+  const watchedTitle = formMethods.watch("title");
+  React.useEffect(() => {
+    if (!initialData && watchedTitle) {
+      const currentSlug = formMethods.getValues("slug");
+      if (!currentSlug || currentSlug === watchedTitle.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').slice(0, -1)) {
+        formMethods.setValue("slug", watchedTitle.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''), { shouldValidate: true });
+      }
+    }
+  }, [watchedTitle, initialData, formMethods]);
+
 
   const handleSubmit = (values: BookFormValues) => {
     const bookData = {
@@ -179,6 +191,23 @@ export function BookForm({ initialData, onSubmit, onSuccess }: BookFormProps) {
                 <FormControl>
                   <Input placeholder="The Great Gatsby" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={formMethods.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL Slug</FormLabel>
+                <FormControl>
+                  <Input placeholder="the-great-gatsby" {...field} />
+                </FormControl>
+                <FormDescription>
+                  The unique URL for this book (e.g., libribooks.com/book/<strong>the-great-gatsby</strong>).
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

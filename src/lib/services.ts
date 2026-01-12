@@ -22,7 +22,8 @@ export const bookService = {
             authorIds: book.authors.map((a: any) => a.authors.id),
             tags: book.tags.map((t: any) => t.tags.name),
             coverImage: book.cover_image_url,
-            purchaseUrls: book.purchase_urls
+            purchaseUrls: book.purchase_urls,
+            slug: book.slug || book.id.toString()
         }));
     },
 
@@ -47,7 +48,40 @@ export const bookService = {
             authorIds: data.authors.map((a: any) => a.authors.id),
             tags: data.tags.map((t: any) => t.tags.name),
             coverImage: data.cover_image_url,
-            purchaseUrls: data.purchase_urls
+            purchaseUrls: data.purchase_urls,
+            slug: data.slug || data.id.toString()
+        };
+    },
+
+    async getBySlug(slug: string): Promise<Book | null> {
+        const { data, error } = await supabase
+            .from('books')
+            .select(`
+        *,
+        categories(name),
+        authors:book_authors(authors(*)),
+        tags:book_tags(tags(name))
+      `)
+            .eq('slug', slug)
+            .single();
+
+        if (error) {
+            // Fallback to ID if slug is numeric
+            if (!isNaN(Number(slug))) {
+                return this.getById(slug);
+            }
+            return null;
+        }
+
+        return {
+            ...data,
+            category: data.categories?.name,
+            authors: data.authors.map((a: any) => a.authors.name),
+            authorIds: data.authors.map((a: any) => a.authors.id),
+            tags: data.tags.map((t: any) => t.tags.name),
+            coverImage: data.cover_image_url,
+            purchaseUrls: data.purchase_urls,
+            slug: data.slug
         };
     },
 
@@ -66,6 +100,7 @@ export const bookService = {
             .from('books')
             .insert({
                 title: book.title,
+                slug: book.slug || book.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
                 cover_image_url: book.coverImage,
                 review: book.review,
                 purchase_urls: book.purchaseUrls,
