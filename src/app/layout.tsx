@@ -74,7 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const siteConfig = {
     name: seoSettings?.defaultTitle || settings?.siteName || 'libribooks.com',
-    url: 'https://libribooks.com',
+    url: 'https://www.libribooks.com',
     description: seoSettings?.metaDescription || settings?.tagline || 'Discover your next favorite book with our insightful reviews, articles, and author interviews.',
     ogImage: 'https://libribooks.com/og.jpg',
     favicon: settings?.faviconUrl || '/favicon.ico',
@@ -144,10 +144,10 @@ export default async function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: seoSettings?.defaultTitle || siteSettings.siteName,
-              url: 'https://libribooks.com',
+              url: 'https://www.libribooks.com',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: `https://libribooks.com/?q={search_term_string}`,
+                target: `https://www.libribooks.com/?q={search_term_string}`,
                 'query-input': 'required name=search_term_string',
               } as any,
             }}

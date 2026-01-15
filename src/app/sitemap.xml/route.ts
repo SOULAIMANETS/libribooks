@@ -1,6 +1,6 @@
 import { bookService, articleService, authorService } from '@/lib/services';
 
-const URL = 'https://libribooks.com';
+const URL = 'https://www.libribooks.com';
 
 export async function GET() {
   const pages = [
