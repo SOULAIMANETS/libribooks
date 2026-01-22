@@ -30,25 +30,16 @@ import type { Book, Author } from '@/lib/types';
 interface HomeClientProps {
   allBooks: Book[];
   authors: Author[];
+  categories: string[];
   faqItems: { question: string; answer: string }[];
   tagline?: string;
   heroSubtitle?: string;
 }
 
-export default function HomeClient({ allBooks, authors, faqItems, tagline, heroSubtitle }: HomeClientProps) {
+export default function HomeClient({ allBooks, authors, categories, faqItems, tagline, heroSubtitle }: HomeClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = React.useMemo(() => {
-    const uniqueCategories = Array.from(new Set(allBooks.map((book) => book.category)));
-    // Shuffle categories (except 'All')
-    const shuffled = [...uniqueCategories];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return ['All', ...shuffled];
-  }, [allBooks]);
   const featuredBooks = allBooks.filter(book => book.featured);
 
   const filteredBooks = allBooks.filter((book) => {
