@@ -208,10 +208,17 @@ export const authorService = {
 
     async getBySlug(slug: string): Promise<Author | null> {
         const { data, error } = await supabase.from('authors').select('*').eq('slug', slug).single();
-        if (error) return null;
+        if (error) {
+            // Fallback to ID if slug is numeric or not found
+            if (!isNaN(Number(slug))) {
+                return this.getById(slug);
+            }
+            return null;
+        }
         return {
             ...data,
-            image: data.image_url
+            image: data.image_url,
+            slug: data.slug || data.id.toString()
         };
     },
 
