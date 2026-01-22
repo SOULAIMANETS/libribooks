@@ -8,17 +8,18 @@ export async function GET() {
         const results = [];
 
         for (const author of authors) {
-            if (!author.slug) {
-                const generatedSlug = author.name
-                    .toLowerCase()
-                    .trim()
-                    .replace(/ /g, '-')
-                    .replace(/[^\w-]+/g, '');
+            const generatedSlug = author.name
+                .toLowerCase()
+                .trim()
+                .replace(/ /g, '-')
+                .replace(/[^\w-]+/g, '');
 
+            // Update if no slug, if slug is a number, or if it doesn't match the name
+            if (!author.slug || !isNaN(Number(author.slug)) || author.slug !== generatedSlug) {
                 await authorService.update(author.id, { slug: generatedSlug });
-                results.push({ name: author.name, status: 'fixed', slug: generatedSlug });
+                results.push({ name: author.name, status: 'fixed', oldSlug: author.slug, newSlug: generatedSlug });
             } else {
-                results.push({ name: author.name, status: 'already-has-slug', slug: author.slug });
+                results.push({ name: author.name, status: 'already-correct', slug: author.slug });
             }
         }
 
