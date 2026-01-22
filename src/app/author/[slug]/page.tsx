@@ -15,9 +15,11 @@ import type { Author, Book as BookType } from '@/lib/types';
 
 export async function generateStaticParams() {
   const authors = await authorService.getAll();
-  return authors.map((author) => ({
-    slug: author.slug,
-  }));
+  return authors
+    .filter((author) => author.slug) // الحماية من وجود مؤلفين بدون slug
+    .map((author) => ({
+      slug: author.slug,
+    }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {

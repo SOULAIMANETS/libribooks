@@ -24,9 +24,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 export async function generateStaticParams() {
   const books = await bookService.getAll();
-  return books.map((book) => ({
-    slug: book.slug || book.id.toString(),
-  }));
+  return books
+    .filter((book) => book.slug) // الحماية من وجود كتب بدون slug
+    .map((book) => ({
+      slug: book.slug,
+    }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
