@@ -22,7 +22,7 @@ export async function GET() {
 
   const bookUrls = books.map(book => `/book/${book.slug || book.id}`);
   const articleUrls = articles.map(article => `/articles/${article.slug}`);
-  const authorUrls = authors.map(author => `/author/${author.id}`);
+  const authorUrls = authors.map(author => `/author/${author.slug}`);
 
   const allUrls = [...pages, ...bookUrls, ...articleUrls, ...authorUrls];
 

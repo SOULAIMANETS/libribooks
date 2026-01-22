@@ -16,18 +16,18 @@ import type { Author, Book as BookType } from '@/lib/types';
 export async function generateStaticParams() {
   const authors = await authorService.getAll();
   return authors.map((author) => ({
-    id: author.id.toString(),
+    slug: author.slug,
   }));
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const author = await authorService.getById(params.id);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const author = await authorService.getBySlug(params.slug);
 
   if (!author) {
     return {};
   }
 
-  const pageUrl = `/author/${author.id}`;
+  const pageUrl = `/author/${author.slug}`;
   const imageUrl = author.image;
 
   return {
@@ -57,8 +57,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 
-export default async function AuthorPage({ params }: { params: { id: string } }) {
-  const author = await authorService.getById(params.id);
+export default async function AuthorPage({ params }: { params: { slug: string } }) {
+  const author = await authorService.getBySlug(params.slug);
 
   if (!author) {
     notFound();
@@ -76,7 +76,7 @@ export default async function AuthorPage({ params }: { params: { id: string } })
           name: author.name,
           description: author.bio,
           image: author.image,
-          url: `https://libribooks.com/author/${author.id}`,
+          url: `https://libribooks.com/author/${author.slug}`,
         }}
       />
       <Header />

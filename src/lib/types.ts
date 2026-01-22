@@ -32,6 +32,7 @@ export interface Article {
 
 export interface Author {
   id: number;
+  slug: string;
   name: string;
   image: string;
   bio: string;

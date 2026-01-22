@@ -77,7 +77,7 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
   }
 
   const allAuthors = await authorService.getAll();
-  const bookAuthors = allAuthors.filter((a) => book.authorIds?.includes(a.id));
+  const bookAuthors = (book.authorIds?.map(id => allAuthors.find(a => a.id === id)).filter(Boolean) || []) as Author[];
 
   const allBooks = await bookService.getAll();
   const similarBooks = allBooks.filter(
@@ -89,7 +89,7 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
   const schemaAuthors: Person[] = bookAuthors.map(author => ({
     '@type': 'Person',
     name: author.name,
-    url: `https://libribooks.com/author/${author.id}`,
+    url: `https://libribooks.com/author/${author.slug}`,
   }));
 
   const schemaFaqs: Question[] = book.faq?.map(item => ({
@@ -152,16 +152,12 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
             <h1 className="text-4xl font-headline font-bold">{book.title}</h1>
             <div className="mt-2 text-xl text-muted-foreground flex items-center gap-2">
               by{' '}
-              {book.authors?.map((author, index) => (
-                <React.Fragment key={book.authorIds?.[index] || index}>
-                  {book.authorIds?.[index] ? (
-                    <Link href={`/author/${book.authorIds[index]}`} className="text-primary hover:underline">
-                      {author}
-                    </Link>
-                  ) : (
-                    <span>{author}</span>
-                  )}
-                  {index < book.authors!.length - 1 && <span>,</span>}
+              {bookAuthors.map((author, index) => (
+                <React.Fragment key={author.id}>
+                  <Link href={`/author/${author.slug}`} className="text-primary hover:underline">
+                    {author.name}
+                  </Link>
+                  {index < bookAuthors.length - 1 && <span>,</span>}
                 </React.Fragment>
               ))}
             </div>

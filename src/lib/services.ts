@@ -204,11 +204,21 @@ export const authorService = {
         };
     },
 
+    async getBySlug(slug: string): Promise<Author | null> {
+        const { data, error } = await supabase.from('authors').select('*').eq('slug', slug).single();
+        if (error) return null;
+        return {
+            ...data,
+            image: data.image_url
+        };
+    },
+
     async create(author: Omit<Author, 'id'>): Promise<Author> {
         const { data, error } = await supabase
             .from('authors')
             .insert({
                 name: author.name,
+                slug: author.slug || author.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
                 bio: author.bio,
                 image_url: author.image
             })
@@ -222,6 +232,7 @@ export const authorService = {
     async update(id: number, author: Partial<Author>): Promise<Author> {
         const updateData: any = {};
         if (author.name) updateData.name = author.name;
+        if (author.slug) updateData.slug = author.slug;
         if (author.bio) updateData.bio = author.bio;
         if (author.image) updateData.image_url = author.image;
 

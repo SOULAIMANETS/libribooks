@@ -39,7 +39,16 @@ export default function HomeClient({ allBooks, authors, faqItems, tagline, heroS
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = ['All', ...Array.from(new Set(allBooks.map((book) => book.category)))];
+  const categories = React.useMemo(() => {
+    const uniqueCategories = Array.from(new Set(allBooks.map((book) => book.category)));
+    // Shuffle categories (except 'All')
+    const shuffled = [...uniqueCategories];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return ['All', ...shuffled];
+  }, [allBooks]);
   const featuredBooks = allBooks.filter(book => book.featured);
 
   const filteredBooks = allBooks.filter((book) => {
@@ -170,7 +179,7 @@ export default function HomeClient({ allBooks, authors, faqItems, tagline, heroS
               {authors.map((author) => (
                 <CarouselItem key={author.id} className="basis-1/2 md:basis-1/4 lg:basis-1/6">
                   <div className="p-2 flex flex-col items-center text-center gap-2">
-                    <Link href={`/author/${author.id}`} className="block group">
+                    <Link href={`/author/${author.slug}`} className="block group">
                       <div className="relative w-32 h-32">
                         <Image
                           src={author.image}
