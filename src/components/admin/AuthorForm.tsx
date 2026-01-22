@@ -24,6 +24,7 @@ import { ImageUpload } from "./ImageUpload";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  slug: z.string().min(2, { message: "Slug must be at least 2 characters." }).regex(/^[a-z0-9-]+$/, { message: "Slug can only contain lowercase letters, numbers, and hyphens." }),
   image: z.string().min(1, { message: "Please upload an image." }),
   bio: z.string().min(20, { message: "Bio must be at least 20 characters." }),
 });
@@ -43,6 +44,7 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       name: "",
+      slug: "",
       image: "",
       bio: "",
     },
@@ -54,11 +56,22 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
     } else {
       formMethods.reset({
         name: "",
+        slug: "",
         image: "",
         bio: "",
       });
     }
   }, [initialData, formMethods.reset]);
+
+  const watchedName = formMethods.watch("name");
+  React.useEffect(() => {
+    if (!initialData && watchedName) {
+      const currentSlug = formMethods.getValues("slug");
+      if (!currentSlug || currentSlug === watchedName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '').slice(0, -1)) {
+        formMethods.setValue("slug", watchedName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''), { shouldValidate: true });
+      }
+    }
+  }, [watchedName, initialData, formMethods]);
 
 
   const handleSubmit = (values: AuthorFormValues) => {
@@ -88,6 +101,23 @@ export function AuthorForm({ initialData, onSubmit, onSuccess }: AuthorFormProps
                 <FormControl>
                   <Input placeholder="J.K. Rowling" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={formMethods.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL Slug</FormLabel>
+                <FormControl>
+                  <Input placeholder="jk-rowling" {...field} />
+                </FormControl>
+                <FormDescription className="text-xs">
+                  The unique URL for this author (e.g., libribooks.com/author/<strong>jk-rowling</strong>).
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
