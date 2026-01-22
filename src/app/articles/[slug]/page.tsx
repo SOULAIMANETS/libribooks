@@ -15,9 +15,11 @@ import type { Article } from '@/lib/types';
 
 export async function generateStaticParams() {
   const articles = await articleService.getAll();
-  return articles.map((article) => ({
-    slug: article.slug,
-  }));
+  return articles
+    .filter((article) => article.slug)
+    .map((article) => ({
+      slug: article.slug,
+    }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
