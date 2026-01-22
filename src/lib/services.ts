@@ -191,7 +191,8 @@ export const authorService = {
         if (error) throw error;
         return data.map(a => ({
             ...a,
-            image: a.image_url
+            image: a.image_url,
+            slug: a.slug || a.id.toString()
         }));
     },
 
@@ -200,7 +201,8 @@ export const authorService = {
         if (error) return null;
         return {
             ...data,
-            image: data.image_url
+            image: data.image_url,
+            slug: data.slug || data.id.toString()
         };
     },
 

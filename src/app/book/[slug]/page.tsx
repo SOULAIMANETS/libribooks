@@ -78,8 +78,12 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
     notFound();
   }
 
-  const allAuthors = await authorService.getAll();
-  const bookAuthors = (book.authorIds?.map(id => allAuthors.find(a => a.id === id)).filter(Boolean) || []) as Author[];
+  const bookAuthors = await Promise.all(
+    (book.authorIds || []).map(async (id) => {
+      const author = await authorService.getById(id);
+      return author && author.slug ? author : null;
+    })
+  ).then(authors => authors.filter((a): a is Author => a !== null));
 
   const allBooks = await bookService.getAll();
   const similarBooks = allBooks.filter(

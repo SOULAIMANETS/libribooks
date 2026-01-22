@@ -21,7 +21,7 @@ export default async function Home() {
   const settings = await settingsService.get('general');
   // Randomize books and authors on each request
   const shuffledBooks = shuffle(allBooks);
-  const shuffledAuthors = shuffle(authors);
+  const shuffledAuthors = shuffle(authors.filter(a => a.slug));
 
   // Randomize categories on each request (keeping 'All' first)
   const uniqueCategories = Array.from(new Set(allBooks.map((book) => book.category)));
