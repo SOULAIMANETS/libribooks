@@ -18,6 +18,7 @@ export default async function Home() {
   const authors = await authorService.getAll();
   const faqPage = await pageService.getBySlug('faq');
   const faqItems = faqPage?.structuredContent || [];
+  const settings = await settingsService.get('general');
   // Randomize books and authors on each request
   const shuffledBooks = shuffle(allBooks);
   const shuffledAuthors = shuffle(authors);
