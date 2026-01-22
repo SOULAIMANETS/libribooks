@@ -22,8 +22,9 @@ export async function generateStaticParams() {
     }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const author = await authorService.getBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const author = await authorService.getBySlug(slug);
 
   if (!author) {
     return {};
@@ -59,8 +60,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 
-export default async function AuthorPage({ params }: { params: { slug: string } }) {
-  const author = await authorService.getBySlug(params.slug);
+export default async function AuthorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const author = await authorService.getBySlug(slug);
 
   if (!author) {
     notFound();

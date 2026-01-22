@@ -31,8 +31,9 @@ export async function generateStaticParams() {
     }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const book = await bookService.getBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const book = await bookService.getBySlug(slug);
 
   if (!book) {
     return {};
@@ -71,8 +72,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 
-export default async function BookDetailPage({ params }: { params: { slug: string } }) {
-  const book = await bookService.getBySlug(params.slug);
+export default async function BookDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const book = await bookService.getBySlug(slug);
 
   if (!book) {
     notFound();
