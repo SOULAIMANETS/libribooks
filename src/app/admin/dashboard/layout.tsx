@@ -19,6 +19,7 @@ import {
   MessageSquare,
   LogOut,
   Mail,
+  BookCheck,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -53,6 +54,7 @@ const menuItems = [
   { href: '/admin/dashboard/popups', label: 'Popups', icon: MessageSquare, roles: ['admin'] },
   { href: '/admin/dashboard/pages', label: 'Pages', icon: FilePenLine, roles: ['admin'] },
   { href: '/admin/dashboard/users', label: 'Users', icon: Users2, roles: ['admin'] },
+  { href: '/admin/dashboard/published-books', label: 'Published Books', icon: BookCheck, roles: ['admin', 'editor'] },
 ];
 
 export default function DashboardLayout({
