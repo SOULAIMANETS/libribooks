@@ -93,7 +93,7 @@ export function PublishedBooksList() {
     // Download CSV
     const downloadCSV = () => {
         const headers = ['ID', 'Title', 'Book URL', 'Author(s)', 'Author URL(s)', 'Category'];
-        
+
         // Filter data based on current table state if needed, or just all data
         // Using `table.getFilteredRowModel().rows` would export what the user sees
         const rowsToExport = table.getFilteredRowModel().rows.map(row => row.original);
@@ -102,11 +102,11 @@ export function PublishedBooksList() {
             headers.join(','),
             ...rowsToExport.map(book => {
                 const authorNames = book.authors.join('; ');
-                
+
                 // Find author objects to get slugs
                 const bookAuthors = authors.filter(a => book.authorIds?.includes(a.id));
                 const authorUrls = bookAuthors.map(a => `https://libribooks.com/author/${a.slug}`).join('; ');
-                
+
                 return [
                     book.id,
                     `"${book.title.replace(/"/g, '""')}"`, // Escape quotes
@@ -128,6 +128,40 @@ export function PublishedBooksList() {
         document.body.removeChild(link);
     };
 
+    // Copyable Link Component
+    const CopyableLink = ({ url }: { url: string }) => {
+        const [copied, setCopied] = React.useState(false);
+
+        const onCopy = () => {
+            navigator.clipboard.writeText(url);
+            setCopied(true);
+            toast({
+                title: 'Copied!',
+                description: 'Link copied to clipboard.',
+            });
+            setTimeout(() => setCopied(false), 2000);
+        };
+
+        return (
+            <div className="flex items-center gap-2 max-w-[200px]">
+                <Input
+                    value={url}
+                    readOnly
+                    className="h-8 text-xs bg-muted/50"
+                />
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={onCopy}
+                >
+                    {copied ? <span className="text-green-500 font-bold">✓</span> : <ExternalLink className="h-3 w-3" />}
+                    <span className="sr-only">Copy</span>
+                </Button>
+            </div>
+        );
+    };
+
     const columns: ColumnDef<Book>[] = [
         {
             accessorKey: 'title',
@@ -143,9 +177,9 @@ export function PublishedBooksList() {
                 )
             },
             cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                    <Link 
-                        href={`/book/${row.original.slug}`} 
+                <div className="flex items-center gap-2 min-w-[150px]">
+                    <Link
+                        href={`/book/${row.original.slug}`}
                         className="font-medium text-primary hover:underline flex items-center gap-1"
                         target="_blank"
                     >
@@ -156,29 +190,56 @@ export function PublishedBooksList() {
             ),
         },
         {
+            id: 'bookUrl',
+            header: 'Book Link',
+            cell: ({ row }) => {
+                const url = `https://libribooks.com/book/${row.original.slug}`;
+                return <CopyableLink url={url} />;
+            }
+        },
+        {
             accessorKey: 'authors',
             header: 'Author(s)',
             cell: ({ row }) => {
                 const book = row.original;
                 return (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-[120px]">
                         {book.authorIds?.map(authorId => {
                             const author = authors.find(a => a.id === authorId);
                             if (!author) return null;
                             return (
-                                <Link 
+                                <Link
                                     key={author.id}
                                     href={`/author/${author.slug}`}
                                     className="text-sm hover:underline text-muted-foreground hover:text-foreground flex items-center gap-1"
                                     target="_blank"
                                 >
                                     {author.name}
-                                    <ExternalLink className="h-3 w-3" />
                                 </Link>
                             )
                         })}
                     </div>
                 )
+            }
+        },
+        {
+            id: 'authorUrl',
+            header: 'Author Link(s)',
+            cell: ({ row }) => {
+                const book = row.original;
+                // Just show the first author's link for simplicity if multiple, 
+                // or map them if needed. For table compactness, let's show one or a list.
+                // Given the request, let's show a list of inputs if multiple.
+                return (
+                    <div className="flex flex-col gap-1">
+                        {book.authorIds?.map(authorId => {
+                            const author = authors.find(a => a.id === authorId);
+                            if (!author) return null;
+                            const url = `https://libribooks.com/author/${author.slug}`;
+                            return <CopyableLink key={author.id} url={url} />;
+                        })}
+                    </div>
+                );
             }
         },
         {
@@ -242,7 +303,7 @@ export function PublishedBooksList() {
                         </SelectContent>
                     </Select>
                 </div>
-                
+
                 <Button onClick={downloadCSV} variant="outline" className="gap-2">
                     <Download className="h-4 w-4" />
                     Download CSV
@@ -291,7 +352,7 @@ export function PublishedBooksList() {
                     </TableBody>
                 </Table>
             </div>
-            
+
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="text-sm text-muted-foreground">
                     Total: {table.getFilteredRowModel().rows.length} books
