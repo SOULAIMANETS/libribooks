@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Book, Author, Article, Category, Tag, Page, PopupAd, Message } from './types';
+import type { Book, Author, Article, Category, Tag, Page, PopupAd, Message, Skill } from './types';
 
 export const bookService = {
     async getAll(): Promise<Book[]> {
@@ -270,16 +270,16 @@ export const articleService = {
             ...a,
             coverImage: a.cover_image_url,
             author: a.author_name,
-            isPillar: a.is_pillar,
-            pillarSlug: a.pillar_slug
+            skillSlug: a.skill_slug,
+            articleRole: a.article_role
         }));
     },
 
-    async getClusterArticles(pillarSlug: string): Promise<Article[]> {
+    async getBySkill(skillSlug: string): Promise<Article[]> {
         const { data, error } = await supabase
             .from('articles')
             .select('*')
-            .eq('pillar_slug', pillarSlug)
+            .eq('skill_slug', skillSlug)
             .order('date', { ascending: false });
 
         if (error) throw error;
@@ -287,8 +287,8 @@ export const articleService = {
             ...a,
             coverImage: a.cover_image_url,
             author: a.author_name,
-            isPillar: a.is_pillar,
-            pillarSlug: a.pillar_slug
+            skillSlug: a.skill_slug,
+            articleRole: a.article_role
         }));
     },
 
@@ -299,8 +299,8 @@ export const articleService = {
             ...data,
             coverImage: data.cover_image_url,
             author: data.author_name,
-            isPillar: data.is_pillar,
-            pillarSlug: data.pillar_slug
+            skillSlug: data.skill_slug,
+            articleRole: data.article_role
         };
     },
 
@@ -315,8 +315,8 @@ export const articleService = {
                 cover_image_url: article.coverImage,
                 author_name: article.author,
                 date: article.date,
-                is_pillar: article.isPillar,
-                pillar_slug: article.pillarSlug
+                skill_slug: article.skillSlug,
+                article_role: article.articleRole
             })
             .select()
             .single();
@@ -326,8 +326,8 @@ export const articleService = {
             ...data,
             coverImage: data.cover_image_url,
             author: data.author_name,
-            isPillar: data.is_pillar,
-            pillarSlug: data.pillar_slug
+            skillSlug: data.skill_slug,
+            articleRole: data.article_role
         };
     },
 
@@ -339,8 +339,8 @@ export const articleService = {
         if (article.coverImage) updateData.cover_image_url = article.coverImage;
         if (article.author) updateData.author_name = article.author;
         if (article.date) updateData.date = article.date;
-        if (article.isPillar !== undefined) updateData.is_pillar = article.isPillar;
-        if (article.pillarSlug !== undefined) updateData.pillar_slug = article.pillarSlug;
+        if (article.skillSlug !== undefined) updateData.skill_slug = article.skillSlug;
+        if (article.articleRole !== undefined) updateData.article_role = article.articleRole;
 
         const { data, error } = await supabase
             .from('articles')
@@ -354,13 +354,93 @@ export const articleService = {
             ...data,
             coverImage: data.cover_image_url,
             author: data.author_name,
-            isPillar: data.is_pillar,
-            pillarSlug: data.pillar_slug
+            skillSlug: data.skill_slug,
+            articleRole: data.article_role
         };
     },
 
     async delete(slug: string): Promise<void> {
         const { error } = await supabase.from('articles').delete().eq('slug', slug);
+        if (error) throw error;
+    }
+};
+
+export const skillService = {
+    async getAll(): Promise<Skill[]> {
+        const { data, error } = await supabase.from('skills').select('*').order('name');
+        if (error) throw error;
+        return data.map(s => ({
+            ...s,
+            pillarContent: s.pillar_content,
+            coverImage: s.cover_image_url
+        }));
+    },
+
+    async getBySlug(slug: string): Promise<Skill | null> {
+        const { data, error } = await supabase.from('skills').select('*').eq('slug', slug).single();
+        if (error) return null;
+        return {
+            ...data,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async getWithArticles(slug: string): Promise<{ skill: Skill; articles: Article[] } | null> {
+        const skill = await this.getBySlug(slug);
+        if (!skill) return null;
+
+        const articles = await articleService.getBySkill(slug);
+        return { skill, articles };
+    },
+
+    async create(skill: Omit<Skill, 'id'>): Promise<Skill> {
+        const { data, error } = await supabase
+            .from('skills')
+            .insert({
+                slug: skill.slug,
+                name: skill.name,
+                description: skill.description,
+                pillar_content: skill.pillarContent,
+                cover_image_url: skill.coverImage,
+                icon: skill.icon
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return {
+            ...data,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async update(slug: string, skill: Partial<Skill>): Promise<Skill> {
+        const updateData: any = {};
+        if (skill.name) updateData.name = skill.name;
+        if (skill.description) updateData.description = skill.description;
+        if (skill.pillarContent) updateData.pillar_content = skill.pillarContent;
+        if (skill.coverImage) updateData.cover_image_url = skill.coverImage;
+        if (skill.icon !== undefined) updateData.icon = skill.icon;
+
+        const { data, error } = await supabase
+            .from('skills')
+            .update(updateData)
+            .eq('slug', slug)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return {
+            ...data,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async delete(slug: string): Promise<void> {
+        const { error } = await supabase.from('skills').delete().eq('slug', slug);
         if (error) throw error;
     }
 };

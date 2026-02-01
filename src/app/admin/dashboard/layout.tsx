@@ -20,6 +20,7 @@ import {
   LogOut,
   Mail,
   BookCheck,
+  Lightbulb,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -48,6 +49,7 @@ const menuItems = [
   { href: '/admin/dashboard/books', label: 'Books', icon: BookCopy, roles: ['admin', 'editor'] },
   { href: '/admin/dashboard/authors', label: 'Authors', icon: Users, roles: ['admin', 'editor'] },
   { href: '/admin/dashboard/articles', label: 'Articles', icon: FileText, roles: ['admin', 'editor'] },
+  { href: '/admin/dashboard/skills', label: 'Skills', icon: Lightbulb, roles: ['admin', 'editor'] },
   { href: '/admin/dashboard/categories', label: 'Categories', icon: Bookmark, roles: ['admin', 'editor'] },
   { href: '/admin/dashboard/tags', label: 'Tags', icon: Tag, roles: ['admin', 'editor'] },
   { href: '/admin/dashboard/inbox', label: 'Inbox', icon: Mail, roles: ['admin'] },

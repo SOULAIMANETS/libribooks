@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,12 +14,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Article } from "@/lib/types";
+import { Article, Skill } from "@/lib/types";
 import { ImageUpload } from "./ImageUpload";
+import { skillService } from "@/lib/services";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -29,19 +37,29 @@ const formSchema = z.object({
   coverImage: z.string().min(1, { message: "Please upload an image." }),
   excerpt: z.string().min(20, { message: "Excerpt must be at least 20 characters." }),
   content: z.string().min(50, { message: "Content must be at least 50 characters." }),
+  skillSlug: z.string().optional(),
+  articleRole: z.string().optional(),
 });
 
 type ArticleFormValues = z.infer<typeof formSchema>;
 
-const defaultFormValues = {
+const defaultFormValues: ArticleFormValues = {
   title: "",
   author: "Admin",
   date: format(new Date(), 'yyyy-MM-dd'),
   coverImage: "",
   excerpt: "",
   content: "",
+  skillSlug: "",
+  articleRole: "pillar-support",
 };
 
+const ARTICLE_ROLES = [
+  { value: 'pillar-support', label: 'Pillar Support' },
+  { value: 'comparison', label: 'Comparison' },
+  { value: 'concept', label: 'Concept' },
+  { value: 'book-focused', label: 'Book Focused' },
+];
 
 interface ArticleFormProps {
   initialData?: Article | null;
@@ -51,29 +69,62 @@ interface ArticleFormProps {
 
 export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormProps) {
   const { toast } = useToast();
+  const [skills, setSkills] = React.useState<Skill[]>([]);
+  const [loadingSkills, setLoadingSkills] = React.useState(true);
+
+  // Fetch skills on mount
+  React.useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const data = await skillService.getAll();
+        setSkills(data);
+      } catch (error) {
+        console.error('Error fetching skills:', error);
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+    fetchSkills();
+  }, []);
 
   const formMethods = useForm<ArticleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-      ...initialData,
+      title: initialData.title,
+      author: initialData.author,
       date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+      coverImage: initialData.coverImage,
+      excerpt: initialData.excerpt,
+      content: initialData.content,
+      skillSlug: initialData.skillSlug || "",
+      articleRole: initialData.articleRole || "pillar-support",
     } : defaultFormValues,
   });
 
   React.useEffect(() => {
     if (initialData) {
       formMethods.reset({
-        ...initialData,
+        title: initialData.title,
+        author: initialData.author,
         date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+        coverImage: initialData.coverImage,
+        excerpt: initialData.excerpt,
+        content: initialData.content,
+        skillSlug: initialData.skillSlug || "",
+        articleRole: initialData.articleRole || "pillar-support",
       });
     } else {
       formMethods.reset(defaultFormValues);
     }
   }, [initialData, formMethods]);
 
-
   const handleSubmit = (values: ArticleFormValues) => {
-    onSubmit(values);
+    const submitData = {
+      ...values,
+      skillSlug: values.skillSlug || undefined,
+      articleRole: values.articleRole as Article['articleRole'] || undefined,
+    };
+    onSubmit(submitData);
 
     toast({
       title: `Article ${initialData ? 'updated' : 'added'}!`,
@@ -133,6 +184,66 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
             />
           </div>
 
+          {/* Skill & Role Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+            <FormField
+              control={formMethods.control}
+              name="skillSlug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skill (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingSkills ? "Loading..." : "Select a skill"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {skills.map((skill) => (
+                        <SelectItem key={skill.slug} value={skill.slug}>
+                          {skill.icon && `${skill.icon} `}{skill.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Assign this article to a skill for better SEO.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={formMethods.control}
+              name="articleRole"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Article Role</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ARTICLE_ROLES.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Content type for SEO classification.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} folder="articles" />
 
           <FormField
@@ -169,6 +280,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
               </FormItem>
             )}
           />
+
           <div className="flex justify-end pt-4">
             <Button type="submit">
               {initialData ? 'Update Article' : 'Add Article'}

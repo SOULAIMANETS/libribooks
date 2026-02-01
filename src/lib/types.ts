@@ -28,8 +28,18 @@ export interface Article {
   coverImage: string;
   author: string;
   date: string;
-  isPillar?: boolean;
-  pillarSlug?: string;
+  skillSlug?: string;
+  articleRole?: 'pillar-support' | 'comparison' | 'concept' | 'book-focused';
+}
+
+export interface Skill {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  pillarContent: string;
+  coverImage: string;
+  icon?: string;
 }
 
 export interface Author {
