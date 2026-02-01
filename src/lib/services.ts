@@ -262,6 +262,116 @@ export const authorService = {
     }
 };
 
+export const categoryService = {
+    async getAll(): Promise<Category[]> {
+        const { data, error } = await supabase.from('categories').select('*').order('name');
+        if (error) throw error;
+        return data.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            description: c.description || `Explore the best books for ${c.name}`,
+            icon: c.icon,
+            pillarContent: c.pillar_content,
+            coverImage: c.cover_image_url
+        }));
+    },
+
+    async getBySlug(slug: string): Promise<Category | null> {
+        // First try to find by slug column
+        const { data, error } = await supabase.from('categories').select('*').eq('slug', slug).single();
+
+        if (error) {
+            // Fallback: find by matching name-derived slug
+            const allCategories = await this.getAll();
+            const match = allCategories.find(c => c.slug === slug);
+            return match || null;
+        }
+
+        return {
+            id: data.id,
+            name: data.name,
+            slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            description: data.description || `Explore the best books for ${data.name}`,
+            icon: data.icon,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async getByName(name: string): Promise<Category | null> {
+        const { data, error } = await supabase.from('categories').select('*').eq('name', name).single();
+        if (error) return null;
+        return {
+            id: data.id,
+            name: data.name,
+            slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            description: data.description || `Explore the best books for ${data.name}`,
+            icon: data.icon,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async getWithBooks(slug: string): Promise<{ category: Category; books: Book[] } | null> {
+        const category = await this.getBySlug(slug);
+        if (!category) return null;
+
+        const books = await bookService.getAll();
+        const categoryBooks = books.filter(book => book.category === category.name);
+
+        return { category, books: categoryBooks };
+    },
+
+    async create(category: Omit<Category, 'id'>): Promise<Category> {
+        const { data, error } = await supabase.from('categories').insert({
+            name: category.name,
+            slug: category.slug,
+            description: category.description,
+            icon: category.icon,
+            pillar_content: category.pillarContent,
+            cover_image_url: category.coverImage
+        }).select().single();
+        if (error) throw error;
+        return {
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            description: data.description,
+            icon: data.icon,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async update(id: number, category: Partial<Category>): Promise<Category> {
+        const updateData: any = {};
+        if (category.name) updateData.name = category.name;
+        if (category.slug) updateData.slug = category.slug;
+        if (category.description) updateData.description = category.description;
+        if (category.icon !== undefined) updateData.icon = category.icon;
+        if (category.pillarContent !== undefined) updateData.pillar_content = category.pillarContent;
+        if (category.coverImage !== undefined) updateData.cover_image_url = category.coverImage;
+
+        const { data, error } = await supabase.from('categories').update(updateData).eq('id', id).select().single();
+        if (error) throw error;
+        return {
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            description: data.description,
+            icon: data.icon,
+            pillarContent: data.pillar_content,
+            coverImage: data.cover_image_url
+        };
+    },
+
+    async delete(id: number): Promise<void> {
+        const { error } = await supabase.from('categories').delete().eq('id', id);
+        if (error) throw error;
+    }
+};
+
 export const articleService = {
     async getAll(): Promise<Article[]> {
         const { data, error } = await supabase.from('articles').select('*').order('date', { ascending: false });
@@ -574,31 +684,6 @@ export const popupAdService = {
 
     async delete(id: number): Promise<void> {
         const { error } = await supabase.from('popup_ads').delete().eq('id', id);
-        if (error) throw error;
-    }
-};
-
-export const categoryService = {
-    async getAll(): Promise<Category[]> {
-        const { data, error } = await supabase.from('categories').select('*').order('name');
-        if (error) throw error;
-        return data;
-    },
-
-    async create(category: Omit<Category, 'id'>): Promise<Category> {
-        const { data, error } = await supabase.from('categories').insert(category).select().single();
-        if (error) throw error;
-        return data;
-    },
-
-    async update(id: number, category: Partial<Category>): Promise<Category> {
-        const { data, error } = await supabase.from('categories').update(category).eq('id', id).select().single();
-        if (error) throw error;
-        return data;
-    },
-
-    async delete(id: number): Promise<void> {
-        const { error } = await supabase.from('categories').delete().eq('id', id);
         if (error) throw error;
     }
 };

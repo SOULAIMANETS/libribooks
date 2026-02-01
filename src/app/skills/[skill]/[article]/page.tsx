@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { skillService, articleService } from '@/lib/services';
+import { categoryService, articleService } from '@/lib/services';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -13,14 +13,15 @@ import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle } from 'schema-dts';
 
 export async function generateStaticParams() {
-    const skills = await skillService.getAll();
+    const categories = await categoryService.getAll();
     const params: { skill: string; article: string }[] = [];
 
-    for (const skill of skills) {
-        const articles = await articleService.getBySkill(skill.slug);
+    for (const category of categories) {
+        const allArticles = await articleService.getAll();
+        const articles = allArticles.filter(a => a.skillSlug === category.slug);
         for (const article of articles) {
             params.push({
-                skill: skill.slug,
+                skill: category.slug!,
                 article: article.slug,
             });
         }
@@ -60,18 +61,18 @@ export async function generateMetadata({ params }: { params: Promise<{ skill: st
 export default async function SkillArticlePage({ params }: { params: Promise<{ skill: string; article: string }> }) {
     const { skill: skillSlug, article: articleSlug } = await params;
 
-    const [skill, article, relatedArticles] = await Promise.all([
-        skillService.getBySlug(skillSlug),
+    const [category, article, allArticles] = await Promise.all([
+        categoryService.getBySlug(skillSlug),
         articleService.getBySlug(articleSlug),
-        articleService.getBySkill(skillSlug),
+        articleService.getAll(),
     ]);
 
-    if (!skill || !article) {
+    if (!category || !article) {
         notFound();
     }
 
-    // Filter out current article from related
-    const otherArticles = relatedArticles.filter(a => a.slug !== article.slug).slice(0, 4);
+    // Filter related articles for this skill
+    const relatedArticles = allArticles.filter(a => a.skillSlug === skillSlug && a.slug !== article.slug).slice(0, 4);
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -100,7 +101,7 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
                         <span>/</span>
                         <Link href="/skills" className="hover:text-primary">Skills</Link>
                         <span>/</span>
-                        <Link href={`/skills/${skill.slug}`} className="hover:text-primary">{skill.name}</Link>
+                        <Link href={`/skills/${category.slug}`} className="hover:text-primary">{category.name}</Link>
                         <span>/</span>
                         <span className="text-foreground font-medium truncate max-w-[200px]">{article.title}</span>
                     </nav>
@@ -156,24 +157,24 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
                     {/* Back to Skill Link */}
                     <div className="mt-12 pt-8 border-t">
                         <Link
-                            href={`/skills/${skill.slug}`}
+                            href={`/skills/${category.slug}`}
                             className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
                         >
-                            &larr; Back to {skill.name} Guide
+                            &larr; Back to {category.name} Guide
                         </Link>
                     </div>
                 </article>
 
                 {/* Related Articles */}
-                {otherArticles.length > 0 && (
+                {relatedArticles.length > 0 && (
                     <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                         <Separator className="mb-12" />
                         <h2 className="text-2xl font-headline font-bold mb-8">
-                            More from {skill.name}
+                            More from {category.name}
                         </h2>
                         <div className="grid gap-6 md:grid-cols-2">
-                            {otherArticles.map((related) => (
-                                <Link key={related.slug} href={`/skills/${skill.slug}/${related.slug}`} className="group">
+                            {relatedArticles.map((related) => (
+                                <Link key={related.slug} href={`/skills/${category.slug}/${related.slug}`} className="group">
                                     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50">
                                         <CardHeader>
                                             <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors">

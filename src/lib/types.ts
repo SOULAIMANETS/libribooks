@@ -67,6 +67,11 @@ export interface Page {
 export interface Category {
   id: number;
   name: string;
+  slug?: string;
+  description?: string;
+  icon?: string;
+  pillarContent?: string;
+  coverImage?: string;
 }
 
 export interface Tag {
