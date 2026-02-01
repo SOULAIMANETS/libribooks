@@ -269,7 +269,26 @@ export const articleService = {
         return data.map(a => ({
             ...a,
             coverImage: a.cover_image_url,
-            author: a.author_name
+            author: a.author_name,
+            isPillar: a.is_pillar,
+            pillarSlug: a.pillar_slug
+        }));
+    },
+
+    async getClusterArticles(pillarSlug: string): Promise<Article[]> {
+        const { data, error } = await supabase
+            .from('articles')
+            .select('*')
+            .eq('pillar_slug', pillarSlug)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+        return data.map(a => ({
+            ...a,
+            coverImage: a.cover_image_url,
+            author: a.author_name,
+            isPillar: a.is_pillar,
+            pillarSlug: a.pillar_slug
         }));
     },
 
@@ -279,7 +298,9 @@ export const articleService = {
         return {
             ...data,
             coverImage: data.cover_image_url,
-            author: data.author_name
+            author: data.author_name,
+            isPillar: data.is_pillar,
+            pillarSlug: data.pillar_slug
         };
     },
 
@@ -293,13 +314,21 @@ export const articleService = {
                 content: article.content,
                 cover_image_url: article.coverImage,
                 author_name: article.author,
-                date: article.date
+                date: article.date,
+                is_pillar: article.isPillar,
+                pillar_slug: article.pillarSlug
             })
             .select()
             .single();
 
         if (error) throw error;
-        return { ...data, coverImage: data.cover_image_url, author: data.author_name };
+        return {
+            ...data,
+            coverImage: data.cover_image_url,
+            author: data.author_name,
+            isPillar: data.is_pillar,
+            pillarSlug: data.pillar_slug
+        };
     },
 
     async update(slug: string, article: Partial<Article>): Promise<Article> {
@@ -310,6 +339,8 @@ export const articleService = {
         if (article.coverImage) updateData.cover_image_url = article.coverImage;
         if (article.author) updateData.author_name = article.author;
         if (article.date) updateData.date = article.date;
+        if (article.isPillar !== undefined) updateData.is_pillar = article.isPillar;
+        if (article.pillarSlug !== undefined) updateData.pillar_slug = article.pillarSlug;
 
         const { data, error } = await supabase
             .from('articles')
@@ -319,7 +350,13 @@ export const articleService = {
             .single();
 
         if (error) throw error;
-        return { ...data, coverImage: data.cover_image_url, author: data.author_name };
+        return {
+            ...data,
+            coverImage: data.cover_image_url,
+            author: data.author_name,
+            isPillar: data.is_pillar,
+            pillarSlug: data.pillar_slug
+        };
     },
 
     async delete(slug: string): Promise<void> {

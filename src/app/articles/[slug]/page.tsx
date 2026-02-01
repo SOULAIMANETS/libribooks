@@ -1,4 +1,5 @@
 
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { articleService } from '@/lib/services';
@@ -69,6 +70,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     notFound();
   }
 
+  // Fetch cluster articles if this is a pillar page
+  const clusterArticles = article.isPillar ? await articleService.getClusterArticles(article.slug) : [];
+
+  // Fetch parent pillar if this is a cluster article
+  const parentPillar = article.pillarSlug ? await articleService.getBySlug(article.pillarSlug) : null;
+
   return (
     <div className="flex flex-col min-h-screen">
       <JsonLd<SchemaArticle>
@@ -88,6 +95,18 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <Header />
       <main className="flex-1 w-full py-12">
         <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumb for Cluster Article */}
+          {parentPillar && (
+            <div className="mb-6">
+              <Link
+                href={`/articles/${parentPillar.slug}`}
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                &larr; Part of: {parentPillar.title}
+              </Link>
+            </div>
+          )}
+
           <div className="relative aspect-video w-full mb-8">
             <Image
               src={article.coverImage}
@@ -119,6 +138,28 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-headline prose-ol:list-decimal prose-ul:list-disc"
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
+
+          {/* Pillar Page: Cluster Content */}
+          {article.isPillar && clusterArticles.length > 0 && (
+            <div className="mt-16 pt-8 border-t">
+              <h2 className="text-2xl font-headline font-bold mb-6">In-Depth Guides & Chapters</h2>
+              <div className="grid gap-6 md:grid-cols-2">
+                {clusterArticles.map((clusterArticle) => (
+                  <div key={clusterArticle.slug} className="group relative border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <Link href={`/articles/${clusterArticle.slug}`}>
+                      <h3 className="text-lg font-semibold group-hover:text-primary mb-2">
+                        {clusterArticle.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {clusterArticle.excerpt}
+                      </p>
+                      <span className="absolute inset-0" />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </article>
       </main>
       <Footer />

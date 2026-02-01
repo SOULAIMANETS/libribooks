@@ -28,6 +28,8 @@ export interface Article {
   coverImage: string;
   author: string;
   date: string;
+  isPillar?: boolean;
+  pillarSlug?: string;
 }
 
 export interface Author {
