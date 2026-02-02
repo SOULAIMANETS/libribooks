@@ -1,4 +1,4 @@
-import { bookService, authorService, pageService, settingsService } from '@/lib/services';
+import { bookService, authorService, pageService, settingsService, categoryService } from '@/lib/services';
 import HomeClient from './HomeClient';
 
 
@@ -16,6 +16,7 @@ function shuffle<T>(array: T[]): T[] {
 export default async function Home() {
   const allBooks = await bookService.getAll();
   const authors = await authorService.getAll();
+  const categories = await categoryService.getAll();
   const faqPage = await pageService.getBySlug('faq');
   const faqItems = faqPage?.structuredContent || [];
   const settings = await settingsService.get('general');
@@ -23,15 +24,15 @@ export default async function Home() {
   const shuffledBooks = shuffle(allBooks);
   const shuffledAuthors = shuffle(authors.filter(a => a.slug));
 
-  // Randomize categories on each request (keeping 'All' first)
-  const uniqueCategories = Array.from(new Set(allBooks.map((book) => book.category)));
-  const shuffledCategories = ['All', ...shuffle(uniqueCategories)];
+  // For the filtering buttons, we want just the names
+  const categoryNames = ['All', ...categories.map(c => c.name)];
 
   return (
     <HomeClient
       allBooks={shuffledBooks}
       authors={shuffledAuthors}
-      categories={shuffledCategories}
+      categories={categoryNames}
+      skills={shuffle(categories).slice(0, 6)} // Show 6 random skills on homepage
       faqItems={faqItems}
       tagline={settings?.tagline}
       heroSubtitle={settings?.heroSubtitle}

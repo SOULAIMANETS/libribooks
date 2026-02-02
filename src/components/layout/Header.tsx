@@ -16,10 +16,10 @@ import { useSiteSettings } from '../SiteSettingsContext';
 import Image from 'next/image';
 
 const navLinks = [
-  { href: '/', label: 'Home' },
   { href: '/skills', label: 'Skills' },
+  { href: '/#collection', label: 'Books' },
+  { href: '/how-we-choose', label: 'How We Choose' },
   { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
 ]
 
 export function Header() {
