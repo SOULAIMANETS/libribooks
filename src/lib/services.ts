@@ -270,7 +270,7 @@ export const categoryService = {
             id: c.id,
             name: c.name,
             slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: c.description || `Explore the best books for ${c.name}`,
+            description: c.description || `Curated ${c.name} books and guides to help you master the skill.`,
             icon: c.icon,
             pillarContent: c.pillar_content,
             coverImage: c.cover_image_url
@@ -292,7 +292,7 @@ export const categoryService = {
             id: data.id,
             name: data.name,
             slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: data.description || `Explore the best books for ${data.name}`,
+            description: data.description || `Curated ${data.name} books and guides to help you master the skill.`,
             icon: data.icon,
             pillarContent: data.pillar_content,
             coverImage: data.cover_image_url
@@ -306,7 +306,7 @@ export const categoryService = {
             id: data.id,
             name: data.name,
             slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: data.description || `Explore the best books for ${data.name}`,
+            description: data.description || `Curated ${data.name} books and guides to help you master the skill.`,
             icon: data.icon,
             pillarContent: data.pillar_content,
             coverImage: data.cover_image_url

@@ -85,7 +85,7 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                         {category.icon && <div className="text-5xl mb-4">{category.icon}</div>}
                         <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight mb-4">
-                            {category.name}
+                            Master {category.name}: The Complete Guide
                         </h1>
                         <p className="text-xl text-muted-foreground max-w-2xl">
                             {category.description}
