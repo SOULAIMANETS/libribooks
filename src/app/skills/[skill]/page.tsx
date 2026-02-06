@@ -4,49 +4,49 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { categoryService, articleService } from '@/lib/services';
+import { skillService, articleService } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
 import { JsonLd } from 'react-schemaorg';
-import { Article as SchemaArticle } from 'schema-dts';
+import { Article as SchemaArticle, CollectionPage } from 'schema-dts';
 
 export async function generateStaticParams() {
-    const categories = await categoryService.getAll();
-    return categories.map((category) => ({
-        skill: category.slug,
+    const skills = await skillService.getAll();
+    return skills.map((skill) => ({
+        skill: skill.slug,
     }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ skill: string }> }): Promise<Metadata> {
     const { skill: skillSlug } = await params;
-    const category = await categoryService.getBySlug(skillSlug);
+    const skill = await skillService.getBySlug(skillSlug);
 
-    if (!category) {
+    if (!skill) {
         return {};
     }
 
     return {
-        title: `${category.name} - Complete Guide`,
-        description: category.description,
+        title: `${skill.name} - Complete Guide`,
+        description: skill.description,
         openGraph: {
-            title: `${category.name} - Complete Guide | Libribooks`,
-            description: category.description,
+            title: `${skill.name} - Complete Guide | Libribooks`,
+            description: skill.description,
             type: 'article',
-            images: category.coverImage ? [{ url: category.coverImage }] : [],
+            images: skill.coverImage ? [{ url: skill.coverImage }] : [],
         },
     };
 }
 
 export default async function SkillPillarPage({ params }: { params: Promise<{ skill: string }> }) {
     const { skill: skillSlug } = await params;
-    const result = await categoryService.getWithBooks(skillSlug);
+    const result = await skillService.getWithBooks(skillSlug);
 
     if (!result) {
         notFound();
     }
 
-    const { category, books } = result;
+    const { skill, books } = result;
 
     // Also fetch articles for this skill (if any are tagged with this skill)
     const allArticles = await articleService.getAll();
@@ -54,13 +54,22 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
 
     return (
         <div className="flex flex-col min-h-screen">
-            <JsonLd<SchemaArticle>
+            <JsonLd<CollectionPage>
                 item={{
                     '@context': 'https://schema.org',
-                    '@type': 'Article',
-                    headline: `${category.name} - Complete Guide`,
-                    description: category.description,
-                    image: category.coverImage,
+                    '@type': 'CollectionPage',
+                    headline: `${skill.name} - Complete Guide`,
+                    description: skill.description,
+                    image: skill.coverImage,
+                    mainEntity: {
+                        '@type': 'ItemList',
+                        itemListElement: books.map((book, index) => ({
+                            '@type': 'ListItem',
+                            position: index + 1,
+                            url: `https://libribooks.com/book/${book.slug}`,
+                            name: book.title
+                        }))
+                    }
                 }}
             />
             <Header />
@@ -75,7 +84,7 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
                             <span>/</span>
                             <Link href="/skills" className="hover:text-primary">Skills</Link>
                             <span>/</span>
-                            <span className="text-foreground font-medium">{category.name}</span>
+                            <span className="text-foreground font-medium">{skill.name}</span>
                         </nav>
                     </div>
                 </div>
@@ -83,22 +92,22 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
                 {/* Hero */}
                 <section className="relative py-16 bg-gradient-to-br from-primary/5 to-background">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                        {category.icon && <div className="text-5xl mb-4">{category.icon}</div>}
+                        {skill.icon && <div className="text-5xl mb-4">{skill.icon}</div>}
                         <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight mb-4">
-                            Master {category.name}: The Complete Guide
+                            Master {skill.name}: The Complete Guide
                         </h1>
                         <p className="text-xl text-muted-foreground max-w-2xl">
-                            {category.description}
+                            {skill.description}
                         </p>
                     </div>
                 </section>
 
                 {/* Pillar Content */}
-                {category.pillarContent && (
+                {skill.pillarContent && (
                     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                         <div
                             className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-headline prose-ol:list-decimal prose-ul:list-disc"
-                            dangerouslySetInnerHTML={{ __html: category.pillarContent }}
+                            dangerouslySetInnerHTML={{ __html: skill.pillarContent }}
                         />
                     </article>
                 )}
@@ -110,7 +119,7 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
                         <div className="flex items-center gap-2 mb-8">
                             <BookOpen className="h-6 w-6 text-primary" />
                             <h2 className="text-2xl font-headline font-bold">
-                                Best {category.name} Books
+                                Best {skill.name} Books
                             </h2>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -155,7 +164,7 @@ export default async function SkillPillarPage({ params }: { params: Promise<{ sk
                         </h2>
                         <div className="grid gap-6 md:grid-cols-2">
                             {relatedArticles.map((article) => (
-                                <Link key={article.slug} href={`/skills/${category.slug}/${article.slug}`} className="group">
+                                <Link key={article.slug} href={`/skills/${skill.slug}/${article.slug}`} className="group">
                                     <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50">
                                         <CardHeader>
                                             {article.articleRole && (

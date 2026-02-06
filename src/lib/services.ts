@@ -503,6 +503,18 @@ export const skillService = {
         };
     },
 
+    async getWithBooks(slug: string): Promise<{ skill: Skill; books: Book[] } | null> {
+        const skill = await this.getBySlug(slug);
+        if (!skill) return null;
+
+        const books = await bookService.getAll();
+        // Filter books where the category name matches the skill name
+        // This assumes a convention where Skill Name == Category Name
+        const skillBooks = books.filter(book => book.category === skill.name);
+
+        return { skill, books: skillBooks };
+    },
+
     async getWithArticles(slug: string): Promise<{ skill: Skill; articles: Article[] } | null> {
         const skill = await this.getBySlug(slug);
         if (!skill) return null;
