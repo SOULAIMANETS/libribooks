@@ -31,7 +31,46 @@ export function ImageUpload({ name, label, currentValue, bucket = 'libribooks', 
     }
   }, [watchedValue, currentValue]);
 
-  // ... (lines 34-73 unchanged)
+  // ... (lines 34-73 unchanged) - Restoring missing code below
+  const onDrop = async (acceptedFiles: File[]) => {
+    if (acceptedFiles && acceptedFiles[0]) {
+      const file = acceptedFiles[0];
+      setIsUploading(true);
+
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${folder}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(filePath);
+
+        setValue(name, publicUrl, { shouldValidate: true, shouldDirty: true });
+        setPreview(publicUrl);
+      } catch (error: any) {
+        console.error('Error uploading image:', error);
+        alert(`Error uploading image: ${error.message || 'Unknown error'}`);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
+    maxFiles: 1,
+    disabled: isUploading
+  });
 
   const removeImage = (e: React.MouseEvent) => {
     e.stopPropagation();
