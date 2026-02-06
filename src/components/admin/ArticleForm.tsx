@@ -53,7 +53,7 @@ type ArticleFormValues = z.infer<typeof formSchema>;
 const defaultFormValues: ArticleFormValues = {
   title: "",
   author: "Admin",
-  date: format(new Date(), 'yyyy-MM-dd'),
+  date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   coverImage: "",
   excerpt: "",
   content: "",
@@ -103,7 +103,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
     defaultValues: initialData ? {
       title: initialData.title,
       author: initialData.author,
-      date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+      date: format(new Date(initialData.date), "yyyy-MM-dd'T'HH:mm"),
       coverImage: initialData.coverImage,
       excerpt: initialData.excerpt,
       content: initialData.content,
@@ -120,7 +120,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
       formMethods.reset({
         title: initialData.title,
         author: initialData.author,
-        date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+        date: format(new Date(initialData.date), "yyyy-MM-dd'T'HH:mm"),
         coverImage: initialData.coverImage,
         excerpt: initialData.excerpt,
         content: initialData.content,
@@ -193,9 +193,9 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
               name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Publication Date</FormLabel>
+                  <FormLabel>Publication Date & Time</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input type="datetime-local" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -61,7 +61,7 @@ export function ArticlesTable() {
     const fetchArticles = React.useCallback(async () => {
         setIsLoading(true);
         try {
-            const articles = await articleService.getAll();
+            const articles = await articleService.getAll({ includeScheduled: true });
             setData(articles);
         } catch (error) {
             console.error('Error fetching articles:', error);

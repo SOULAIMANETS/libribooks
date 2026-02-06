@@ -31,7 +31,7 @@ export default function DashboardPage() {
         const [booksData, authorsData, articlesData, categoriesData] = await Promise.all([
           bookService.getAll(),
           authorService.getAll(),
-          articleService.getAll(),
+          articleService.getAll({ includeScheduled: true }),
           categoryService.getAll(),
         ]);
         setBooks(booksData);

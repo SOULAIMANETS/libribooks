@@ -373,8 +373,14 @@ export const categoryService = {
 };
 
 export const articleService = {
-    async getAll(): Promise<Article[]> {
-        const { data, error } = await supabase.from('articles').select('*').order('date', { ascending: false });
+    async getAll(options: { includeScheduled?: boolean } = {}): Promise<Article[]> {
+        let query = supabase.from('articles').select('*');
+
+        if (!options.includeScheduled) {
+            query = query.lte('date', new Date().toISOString());
+        }
+
+        const { data, error } = await query.order('date', { ascending: false });
         if (error) throw error;
         return data.map(a => ({
             ...a,
@@ -388,12 +394,17 @@ export const articleService = {
         }));
     },
 
-    async getBySkill(skillSlug: string): Promise<Article[]> {
-        const { data, error } = await supabase
+    async getBySkill(skillSlug: string, options: { includeScheduled?: boolean } = {}): Promise<Article[]> {
+        let query = supabase
             .from('articles')
             .select('*')
-            .eq('skill_slug', skillSlug)
-            .order('date', { ascending: false });
+            .eq('skill_slug', skillSlug);
+
+        if (!options.includeScheduled) {
+            query = query.lte('date', new Date().toISOString());
+        }
+
+        const { data, error } = await query.order('date', { ascending: false });
 
         if (error) throw error;
         return data.map(a => ({
