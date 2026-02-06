@@ -4,193 +4,191 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { skillService, articleService, categoryService } from '@/lib/services';
+import { skillService, articleService } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
-import { JsonLd } from 'react-schemaorg';
-import { Article as SchemaArticle, CollectionPage } from 'schema-dts';
+
+interface PageProps {
+    params: Promise<{ skill: string }>;
+}
 
 export async function generateStaticParams() {
-    const categories = await categoryService.getAll();
-    return categories.map((category) => ({
-        skill: category.slug,
+    const skills = await skillService.getAll();
+    return skills.map((skill) => ({
+        skill: skill.slug,
     }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ skill: string }> }): Promise<Metadata> {
-    const { skill: skillSlug } = await params;
-    const category = await categoryService.getBySlug(skillSlug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { skill: slug } = await params;
+    const skill = await skillService.getBySlug(slug);
 
-    if (!category) {
-        return {};
-    }
+    if (!skill) return { title: 'Skill Not Found' };
 
     return {
-        title: `${category.name} - Complete Guide`,
-        description: category.description,
+        title: `${skill.name} - Master this Skill | Libribooks`,
+        description: skill.description,
         openGraph: {
-            title: `${category.name} - Complete Guide | Libribooks`,
-            description: category.description,
-            type: 'article',
-            images: category.coverImage ? [{ url: category.coverImage }] : [],
+            title: skill.name,
+            description: skill.description,
+            images: skill.coverImage ? [skill.coverImage] : [],
         },
     };
 }
 
-export default async function SkillPillarPage({ params }: { params: Promise<{ skill: string }> }) {
-    const { skill: skillSlug } = await params;
-    const result = await categoryService.getWithBooks(skillSlug);
+export default async function SkillPillarPage({ params }: PageProps) {
+    const { skill: slug } = await params;
+    const data = await skillService.getWithArticles(slug);
 
-    if (!result) {
+    if (!data) {
         notFound();
     }
 
-    const { category: skill, books } = result;
-
-    // Also fetch articles for this skill (if any are tagged with this skill)
-    const allArticles = await articleService.getAll();
-    const relatedArticles = allArticles.filter(a => a.skillSlug === skillSlug);
+    const { skill, articles } = data;
+    const pillarPost = articles.find(a => a.articleRole === 'pillar-support') || articles[0];
+    const otherArticles = articles.filter(a => a.slug !== pillarPost?.slug);
 
     return (
         <div className="flex flex-col min-h-screen">
-            <JsonLd<CollectionPage>
-                item={{
-                    '@context': 'https://schema.org',
-                    '@type': 'CollectionPage',
-                    headline: `${skill.name} - Complete Guide`,
-                    description: skill.description,
-                    image: skill.coverImage,
-                    mainEntity: {
-                        '@type': 'ItemList',
-                        itemListElement: books.map((book, index) => ({
-                            '@type': 'ListItem',
-                            position: index + 1,
-                            url: `https://libribooks.com/book/${book.slug}`,
-                            name: book.title
-                        }))
-                    }
-                }}
-            />
             <Header />
-            <main className="flex-1 w-full">
-                {/* Breadcrumb */}
-                <div className="bg-muted/50 border-b">
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Link href="/" className="hover:text-primary flex items-center gap-1">
-                                <Home className="h-3 w-3" /> Home
-                            </Link>
-                            <span>/</span>
-                            <Link href="/skills" className="hover:text-primary">Skills</Link>
-                            <span>/</span>
-                            <span className="text-foreground font-medium">{skill.name}</span>
-                        </nav>
-                    </div>
-                </div>
 
-                {/* Hero */}
-                <section className="relative py-16 bg-gradient-to-br from-primary/5 to-background">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                        {skill.icon && <div className="text-5xl mb-4">{skill.icon}</div>}
-                        <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight mb-4">
-                            Master {skill.name}: The Complete Guide
+            <main className="flex-grow">
+                {/* Hero Section */}
+                <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden">
+                    {skill.coverImage ? (
+                        <>
+                            <Image
+                                src={skill.coverImage}
+                                alt={skill.name}
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                            <div className="absolute inset-0 bg-black/60" />
+                        </>
+                    ) : (
+                        <div className="absolute inset-0 bg-primary/10" />
+                    )}
+
+                    <div className="relative z-10 max-w-5xl mx-auto px-4 text-center text-white">
+                        <div className="flex items-center justify-center gap-4 mb-4">
+                            <Link href="/" className="text-white/80 hover:text-white transition-colors">
+                                <Home className="h-5 w-5" />
+                            </Link>
+                            <span className="text-white/40">/</span>
+                            <Link href="/skills" className="text-white/80 hover:text-white transition-colors">
+                                Skills
+                            </Link>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold mb-4">
+                            {skill.icon && <span className="mr-4">{skill.icon}</span>}
+                            {skill.name}
                         </h1>
-                        <p className="text-xl text-muted-foreground max-w-2xl">
+                        <p className="text-xl text-white/90 max-w-2xl mx-auto font-light leading-relaxed">
                             {skill.description}
                         </p>
                     </div>
                 </section>
 
-                {/* Pillar Content */}
-                {skill.pillarContent && (
-                    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <div
-                            className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-headline prose-ol:list-decimal prose-ul:list-disc"
-                            dangerouslySetInnerHTML={{ __html: skill.pillarContent }}
-                        />
-                    </article>
-                )}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <div className="grid lg:grid-cols-3 gap-12">
+                        {/* Main Pillar Content */}
+                        <div className="lg:col-span-2 space-y-12">
+                            {/* Pillar Content / Guide */}
+                            <section className="prose prose-lg prose-primary max-w-none">
+                                <div
+                                    className="pillar-content-rendered"
+                                    dangerouslySetInnerHTML={{ __html: skill.pillarContent }}
+                                />
+                            </section>
 
-                {/* Books Section */}
-                {books.length > 0 && (
-                    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <Separator className="mb-12" />
-                        <div className="flex items-center gap-2 mb-8">
-                            <BookOpen className="h-6 w-6 text-primary" />
-                            <h2 className="text-2xl font-headline font-bold">
-                                Best {skill.name} Books
-                            </h2>
-                        </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {books.map((book) => (
-                                <Link key={book.id} href={`/book/${book.slug}`} className="group">
-                                    <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
-                                        <div className="relative aspect-[3/4] w-full overflow-hidden">
-                                            <Image
-                                                src={book.coverImage}
-                                                alt={book.title}
-                                                fill
-                                                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            />
+                            <Separator />
+
+                            {/* Articles List */}
+                            <section>
+                                <h2 className="text-3xl font-headline font-bold mb-8">Related Articles & Guides</h2>
+                                <div className="grid gap-6">
+                                    {articles.map((article) => (
+                                        <Link key={article.slug} href={`/articles/${article.slug}`}>
+                                            <Card className="hover:shadow-md transition-shadow">
+                                                <CardContent className="p-6">
+                                                    <div className="flex gap-6">
+                                                        {article.coverImage && (
+                                                            <div className="hidden sm:block relative w-32 h-32 flex-shrink-0">
+                                                                <Image
+                                                                    src={article.coverImage}
+                                                                    alt={article.title}
+                                                                    fill
+                                                                    className="object-cover rounded-md"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-grow">
+                                                            <h3 className="text-xl font-headline font-bold mb-2 group-hover:text-primary">
+                                                                {article.title}
+                                                            </h3>
+                                                            <p className="text-muted-foreground line-clamp-2 text-sm mb-4">
+                                                                {article.excerpt}
+                                                            </p>
+                                                            <div className="flex items-center text-primary text-sm font-medium">
+                                                                Read More <ArrowRight className="ml-2 h-4 w-4" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
+                                    ))}
+
+                                    {articles.length === 0 && (
+                                        <div className="text-center py-12 bg-muted/30 rounded-lg">
+                                            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                                            <p className="text-muted-foreground">More guides coming soon!</p>
                                         </div>
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors line-clamp-2">
-                                                {book.title}
-                                            </CardTitle>
-                                            <CardDescription>
-                                                by {book.authors.join(', ')}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <span className="text-sm text-primary font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                                                View Book <ArrowRight className="h-4 w-4" />
-                                            </span>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            ))}
+                                    )}
+                                </div>
+                            </section>
                         </div>
-                    </section>
-                )}
 
-                {/* Related Articles */}
-                {relatedArticles.length > 0 && (
-                    <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <Separator className="mb-12" />
-                        <h2 className="text-2xl font-headline font-bold mb-8">
-                            In-Depth Guides & Insights
-                        </h2>
-                        <div className="grid gap-6 md:grid-cols-2">
-                            {relatedArticles.map((article) => (
-                                <Link key={article.slug} href={`/skills/${skill.slug}/${article.slug}`} className="group">
-                                    <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50">
-                                        <CardHeader>
-                                            {article.articleRole && (
-                                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full capitalize w-fit mb-2">
-                                                    {article.articleRole.replace('-', ' ')}
-                                                </span>
-                                            )}
-                                            <CardTitle className="text-lg font-headline group-hover:text-primary transition-colors">
-                                                {article.title}
-                                            </CardTitle>
-                                            <CardDescription className="line-clamp-2">
-                                                {article.excerpt}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <span className="text-sm text-primary font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                                                Read More <ArrowRight className="h-4 w-4" />
-                                            </span>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            ))}
-                        </div>
-                    </section>
-                )}
+                        {/* Sidebar */}
+                        <aside className="space-y-8">
+                            <Card className="bg-primary/5 border-none">
+                                <CardHeader>
+                                    <CardTitle>About this Skill</CardTitle>
+                                </CardHeader>
+                                <CardContent className="text-sm space-y-4">
+                                    <p>
+                                        Our {skill.name} roadmap is designed to take you from foundational concepts to advanced mastery through carefully selected reading and actionable insights.
+                                    </p>
+                                    <div className="pt-4">
+                                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Total Guides</div>
+                                        <div className="text-3xl font-headline font-bold text-primary">{articles.length}</div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Share / CTA */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Want more?</CardTitle>
+                                </CardHeader>
+                                <CardContent className="text-sm">
+                                    <p className="mb-4 text-muted-foreground">
+                                        Subscribe to get our weekly reading lists and summary notes delivered to your inbox.
+                                    </p>
+                                    <Link href="/newsletter">
+                                        <button className="w-full py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors font-medium">
+                                            Join Newsletter
+                                        </button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </aside>
+                    </div>
+                </div>
             </main>
+
             <Footer />
         </div>
     );

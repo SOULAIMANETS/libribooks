@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { categoryService } from '@/lib/services';
+import { skillService } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, BookOpen } from 'lucide-react';
 
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function SkillsPage() {
-    const categories = await categoryService.getAll();
+    const skills = await skillService.getAll();
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -43,39 +43,39 @@ export default async function SkillsPage() {
                 <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                     <h2 className="text-2xl font-headline font-bold mb-8">Explore Skills</h2>
 
-                    {categories.length === 0 ? (
+                    {skills.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <p>No skills available yet. Check back soon!</p>
                         </div>
                     ) : (
                         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                            {categories.map((category) => (
-                                <Link key={category.id} href={`/skills/${category.slug}`} className="group">
+                            {skills.map((skill) => (
+                                <Link key={skill.id} href={`/skills/${skill.slug}`} className="group">
                                     <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
-                                        {category.coverImage && (
+                                        {skill.coverImage && (
                                             <div className="relative h-40 w-full overflow-hidden">
                                                 <Image
-                                                    src={category.coverImage}
-                                                    alt={category.name}
+                                                    src={skill.coverImage}
+                                                    alt={skill.name}
                                                     fill
                                                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                {category.icon && (
+                                                {skill.icon && (
                                                     <div className="absolute bottom-3 left-3 text-3xl">
-                                                        {category.icon}
+                                                        {skill.icon}
                                                     </div>
                                                 )}
                                             </div>
                                         )}
                                         <CardHeader>
                                             <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors flex items-center gap-2">
-                                                {category.icon && !category.coverImage && <span className="text-2xl">{category.icon}</span>}
-                                                {category.name}
+                                                {skill.icon && !skill.coverImage && <span className="text-2xl">{skill.icon}</span>}
+                                                {skill.name}
                                             </CardTitle>
                                             <CardDescription className="line-clamp-2">
-                                                {category.description}
+                                                {skill.description}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>

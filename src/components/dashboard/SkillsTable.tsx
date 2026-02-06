@@ -41,29 +41,26 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
-import { categoryService } from '@/lib/services'; // CHANGED: use categoryService
-import type { Category } from '@/lib/types'; // CHANGED: use Category type
+import { skillService } from '@/lib/services';
+import type { Skill } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SkillForm } from '@/components/admin/SkillForm';
 import { useToast } from '@/hooks/use-toast';
 
-// Helper to cast Category to any for the Form if needed, or we adapt the form
-// For now, let's treat Category as compatible with Skill form expectations
-
 export function SkillsTable() {
-    const [data, setData] = React.useState<Category[]>([]);
+    const [data, setData] = React.useState<Skill[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [isAddSkillOpen, setAddSkillOpen] = React.useState(false);
-    const [editingSkill, setEditingSkill] = React.useState<Category | null>(null);
-    const [deletingSkill, setDeletingSkill] = React.useState<Category | null>(null);
+    const [editingSkill, setEditingSkill] = React.useState<Skill | null>(null);
+    const [deletingSkill, setDeletingSkill] = React.useState<Skill | null>(null);
     const { toast } = useToast();
 
     const fetchSkills = React.useCallback(async () => {
         setIsLoading(true);
         try {
-            const skills = await categoryService.getAll();
+            const skills = await skillService.getAll();
             setData(skills);
         } catch (error) {
             console.error('Error fetching skills:', error);
@@ -81,10 +78,10 @@ export function SkillsTable() {
         fetchSkills();
     }, [fetchSkills]);
 
-    const deleteSkill = async (id: number) => {
+    const deleteSkill = async (slug: string) => {
         try {
-            await categoryService.delete(id);
-            setData(data.filter(skill => skill.id !== id));
+            await skillService.delete(slug);
+            setData(data.filter(skill => skill.slug !== slug));
             toast({
                 title: 'Skill deleted',
                 description: 'The skill has been successfully removed.',
@@ -101,8 +98,7 @@ export function SkillsTable() {
 
     const addSkill = async (skillData: any) => {
         try {
-            // Check if name or slug already exists? Service might handle duplicates or throw error
-            await categoryService.create(skillData);
+            await skillService.create(skillData);
             await fetchSkills();
             setAddSkillOpen(false);
             toast({
@@ -119,9 +115,9 @@ export function SkillsTable() {
         }
     };
 
-    const updateSkill = async (updatedSkill: any) => {
+    const updateSkill = async (slug: string, updatedSkill: any) => {
         try {
-            await categoryService.update(updatedSkill.id, updatedSkill);
+            await skillService.update(slug, updatedSkill);
             await fetchSkills();
             setEditingSkill(null);
             toast({
@@ -138,7 +134,7 @@ export function SkillsTable() {
         }
     };
 
-    const columns: ColumnDef<Category>[] = [
+    const columns: ColumnDef<Skill>[] = [
         {
             accessorKey: 'name',
             header: 'Name',
@@ -258,10 +254,9 @@ export function SkillsTable() {
                     {editingSkill && (
                         <SkillForm
                             key={editingSkill.slug}
-                            // @ts-ignore - Category is compatible with Skill for form purposes
                             initialData={editingSkill}
                             onSubmit={(skillData: any) => {
-                                updateSkill({ ...skillData, id: editingSkill.id });
+                                updateSkill(editingSkill.slug, skillData);
                             }}
                             onSuccess={() => { }}
                         />
@@ -274,14 +269,14 @@ export function SkillsTable() {
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the skill
-                            &quot;{deletingSkill?.name}&quot; and remove it from books.
+                            &quot;{deletingSkill?.name}&quot;.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => {
                             if (deletingSkill) {
-                                deleteSkill(deletingSkill.id) // Using ID now
+                                deleteSkill(deletingSkill.slug)
                                 setDeletingSkill(null)
                             }
                         }}>
