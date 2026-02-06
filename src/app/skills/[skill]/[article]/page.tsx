@@ -38,12 +38,16 @@ export async function generateMetadata({ params }: { params: Promise<{ skill: st
         return {};
     }
 
+    // Use custom SEO fields if set, otherwise fallback to title/excerpt
+    const seoTitle = article.metaTitle || article.title;
+    const seoDescription = article.metaDescription || article.excerpt;
+
     return {
-        title: article.title,
-        description: article.excerpt,
+        title: seoTitle,
+        description: seoDescription,
         openGraph: {
-            title: article.title,
-            description: article.excerpt,
+            title: seoTitle,
+            description: seoDescription,
             type: 'article',
             publishedTime: new Date(article.date).toISOString(),
             authors: [article.author],
@@ -51,8 +55,8 @@ export async function generateMetadata({ params }: { params: Promise<{ skill: st
         },
         twitter: {
             card: 'summary_large_image',
-            title: article.title,
-            description: article.excerpt,
+            title: seoTitle,
+            description: seoDescription,
             images: article.coverImage ? [article.coverImage] : [],
         },
     };
@@ -74,7 +78,7 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
     // Filter related articles for this skill
     const relatedArticles = allArticles.filter(a => a.skillSlug === skillSlug && a.slug !== article.slug).slice(0, 4);
 
-    // Function to inject auto-links into content
+    // Function to inject auto-links into content (FIRST OCCURRENCE ONLY)
     const injectAutoLinks = (content: string, links: { keyword: string; url: string }[]) => {
         if (!links || links.length === 0) return content;
 
@@ -83,13 +87,15 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
         const sortedLinks = [...links].sort((a, b) => b.keyword.length - a.keyword.length);
 
         sortedLinks.forEach(({ keyword, url }) => {
-            // Regex to match the keyword outside of HTML tags
-            // Simplified approach: match keyword as a whole word, 
-            // ensuring it's not inside a tag (very basic implementation)
+            // Regex to match the keyword outside of HTML tags (FIRST OCCURRENCE ONLY - no 'g' flag)
             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(?<!<[^>]*)\\b${escapedKeyword}\\b(?![^<]*>)`, 'gu');
+            // Match only if:
+            // 1. Not preceded by a character that would be inside a tag (simplified)
+            // 2. Word boundary on both sides
+            // 3. Not inside an existing <a> tag (basic check)
+            const regex = new RegExp(`(?<!<[^>]*)\\b${escapedKeyword}\\b(?![^<]*>)`, 'u');
 
-            // Avoid double-linking if a keyword is already part of a link
+            // Replace only the FIRST match
             processedContent = processedContent.replace(regex, (match) => {
                 return `<a href="${url}" class="text-primary hover:underline font-medium" target="_blank" rel="noopener noreferrer">${match}</a>`;
             });

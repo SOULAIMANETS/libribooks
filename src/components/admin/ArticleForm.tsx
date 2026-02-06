@@ -44,6 +44,8 @@ const formSchema = z.object({
     keyword: z.string(),
     url: z.string()
   })).optional().default([]),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
 });
 
 type ArticleFormValues = z.infer<typeof formSchema>;
@@ -58,6 +60,8 @@ const defaultFormValues: ArticleFormValues = {
   skillSlug: "none",
   articleRole: "pillar-support",
   keywordLinks: [],
+  metaTitle: "",
+  metaDescription: "",
 };
 
 const ARTICLE_ROLES = [
@@ -106,6 +110,8 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
       skillSlug: initialData.skillSlug || "none",
       articleRole: initialData.articleRole || "pillar-support",
       keywordLinks: initialData.keywordLinks || [],
+      metaTitle: initialData.metaTitle || "",
+      metaDescription: initialData.metaDescription || "",
     } : defaultFormValues,
   });
 
@@ -121,6 +127,8 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
         skillSlug: initialData.skillSlug || "none",
         articleRole: initialData.articleRole || "pillar-support",
         keywordLinks: initialData.keywordLinks || [],
+        metaTitle: initialData.metaTitle || "",
+        metaDescription: initialData.metaDescription || "",
       });
     } else {
       formMethods.reset(defaultFormValues);
@@ -132,6 +140,8 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
       ...values,
       skillSlug: values.skillSlug === "none" ? undefined : values.skillSlug,
       articleRole: values.articleRole as Article['articleRole'] || undefined,
+      metaTitle: values.metaTitle || undefined,
+      metaDescription: values.metaDescription || undefined,
     };
     onSubmit(submitData);
 
@@ -254,6 +264,47 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
           </div>
 
           <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} folder="articles" />
+
+          {/* SEO Settings */}
+          <div className="space-y-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+            <label className="text-sm font-medium">SEO Settings</label>
+            <FormField
+              control={formMethods.control}
+              name="metaTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Meta Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Custom title for search engines (leave blank to use article title)" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    60 characters recommended for optimal display in search results.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={formMethods.control}
+              name="metaDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Meta Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Custom description for search engines (leave blank to use excerpt)"
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    155 characters recommended for optimal display in search results.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* AutoLink Manager */}
           <FormField

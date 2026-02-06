@@ -31,6 +31,8 @@ export interface Article {
   skillSlug?: string;
   articleRole?: 'pillar-support' | 'comparison' | 'concept' | 'book-focused';
   keywordLinks?: { keyword: string; url: string }[];
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export interface Skill {
