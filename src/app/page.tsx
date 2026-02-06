@@ -32,7 +32,7 @@ export default async function Home() {
       allBooks={shuffledBooks}
       authors={shuffledAuthors}
       categories={categoryNames}
-      skills={shuffle(categories).slice(0, 6)} // Show 6 random skills on homepage
+
       faqItems={faqItems}
       tagline={settings?.tagline}
       heroSubtitle={settings?.heroSubtitle}

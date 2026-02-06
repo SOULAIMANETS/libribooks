@@ -32,13 +32,13 @@ interface HomeClientProps {
   allBooks: Book[];
   authors: Author[];
   categories: string[];
-  skills: Category[];
+
   faqItems: { question: string; answer: string }[];
   tagline?: string;
   heroSubtitle?: string;
 }
 
-export default function HomeClient({ allBooks, authors, categories, skills, faqItems, tagline, heroSubtitle }: HomeClientProps) {
+export default function HomeClient({ allBooks, authors, categories, faqItems, tagline, heroSubtitle }: HomeClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -96,39 +96,7 @@ export default function HomeClient({ allBooks, authors, categories, skills, faqI
           </div>
         </section>
 
-        {/* Master Essential Skills Section */}
-        <section className="max-w-7xl mx-auto mb-20">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-            <div>
-              <h2 className="text-3xl font-headline font-bold mb-2">Master Essential Skills</h2>
-              <p className="text-muted-foreground">Comprehensive guides and book recommendations for every area of life.</p>
-            </div>
-            <Link href="/skills" className="text-primary hover:underline font-medium flex items-center gap-1">
-              View all 10 skills <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {skills.map((skill) => (
-              <Link key={skill.id} href={`/skills/${skill.slug}`} className="group">
-                <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-3xl">{skill.icon || '📚'}</div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-1" />
-                    </div>
-                    <CardTitle className="text-xl font-headline group-hover:text-primary transition-colors">
-                      {skill.name}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {skill.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
 
         <section className="max-w-7xl mx-auto mb-12">
           <div className="mb-8 max-w-lg mx-auto">
