@@ -572,10 +572,10 @@ export const skillService = {
 
     async update(slug: string, skill: Partial<Skill>): Promise<Skill> {
         const updateData: any = {};
-        if (skill.name) updateData.name = skill.name;
-        if (skill.description) updateData.description = skill.description;
-        if (skill.pillarContent) updateData.pillar_content = skill.pillarContent;
-        if (skill.coverImage) updateData.cover_image_url = skill.coverImage;
+        if (skill.name !== undefined) updateData.name = skill.name;
+        if (skill.description !== undefined) updateData.description = skill.description;
+        if (skill.pillarContent !== undefined) updateData.pillar_content = skill.pillarContent;
+        if (skill.coverImage !== undefined) updateData.cover_image_url = skill.coverImage;
         if (skill.icon !== undefined) updateData.icon = skill.icon;
 
         const { data, error } = await supabase
