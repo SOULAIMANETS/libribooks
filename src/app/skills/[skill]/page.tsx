@@ -12,41 +12,41 @@ import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle, CollectionPage } from 'schema-dts';
 
 export async function generateStaticParams() {
-    const skills = await skillService.getAll();
-    return skills.map((skill) => ({
-        skill: skill.slug,
+    const categories = await categoryService.getAll();
+    return categories.map((category) => ({
+        skill: category.slug,
     }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ skill: string }> }): Promise<Metadata> {
     const { skill: skillSlug } = await params;
-    const skill = await skillService.getBySlug(skillSlug);
+    const category = await categoryService.getBySlug(skillSlug);
 
-    if (!skill) {
+    if (!category) {
         return {};
     }
 
     return {
-        title: `${skill.name} - Complete Guide`,
-        description: skill.description,
+        title: `${category.name} - Complete Guide`,
+        description: category.description,
         openGraph: {
-            title: `${skill.name} - Complete Guide | Libribooks`,
-            description: skill.description,
+            title: `${category.name} - Complete Guide | Libribooks`,
+            description: category.description,
             type: 'article',
-            images: skill.coverImage ? [{ url: skill.coverImage }] : [],
+            images: category.coverImage ? [{ url: category.coverImage }] : [],
         },
     };
 }
 
 export default async function SkillPillarPage({ params }: { params: Promise<{ skill: string }> }) {
     const { skill: skillSlug } = await params;
-    const result = await skillService.getWithBooks(skillSlug);
+    const result = await categoryService.getWithBooks(skillSlug);
 
     if (!result) {
         notFound();
     }
 
-    const { skill, books } = result;
+    const { category: skill, books } = result;
 
     // Also fetch articles for this skill (if any are tagged with this skill)
     const allArticles = await articleService.getAll();

@@ -62,7 +62,6 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
         } : defaultFormValues,
     });
 
-    // useEffect for reset removed as defaultValues handles initialization
     React.useEffect(() => {
         if (initialData) {
             formMethods.reset({
@@ -73,8 +72,9 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
                 coverImage: initialData.coverImage || "",
                 icon: initialData.icon || "",
             });
+        } else {
+            formMethods.reset(defaultFormValues);
         }
-        // No else block needed; defaultValues handles the 'add' case
     }, [initialData, formMethods]);
 
     // Auto-generate slug from name
@@ -114,109 +114,107 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
     };
 
     return (
-        <FormProvider {...formMethods}>
-            <Form {...formMethods}>
-                <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                            control={formMethods.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Productivity" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={formMethods.control}
-                            name="slug"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Slug</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="productivity" {...field} disabled={!!initialData} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        URL-friendly identifier (auto-generated)
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
+        <Form {...formMethods}>
+            <form onSubmit={formMethods.handleSubmit(handleSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         control={formMethods.control}
-                        name="icon"
+                        name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Icon (Emoji)</FormLabel>
+                                <FormLabel>Name</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="🎯" {...field} className="w-24 text-2xl" />
+                                    <Input placeholder="e.g. Productivity" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={formMethods.control}
+                        name="slug"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Slug</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="productivity" {...field} disabled={!!initialData} />
                                 </FormControl>
                                 <FormDescription>
-                                    Use an emoji as the skill icon
+                                    URL-friendly identifier (auto-generated)
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                </div>
 
-                    <FormField
-                        control={formMethods.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder="A short description of this skill..."
-                                        rows={2}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    Short description shown on the Skills Hub page
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <FormField
+                    control={formMethods.control}
+                    name="icon"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Icon (Emoji)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="🎯" {...field} className="w-24 text-2xl" />
+                            </FormControl>
+                            <FormDescription>
+                                Use an emoji as the skill icon
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                    <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} folder="skills" />
+                <FormField
+                    control={formMethods.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="A short description of this skill..."
+                                    rows={2}
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                Short description shown on the Skills Hub page
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                    <FormField
-                        control={formMethods.control}
-                        name="pillarContent"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Pillar Content (HTML)</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder="<h2>What is Productivity?</h2><p>Productivity is...</p>"
-                                        rows={12}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    The comprehensive guide content (~3000 words). HTML is allowed.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} folder="skills" />
 
-                    <div className="flex justify-end pt-4">
-                        <Button type="submit">
-                            {initialData ? 'Update Skill' : 'Add Skill'}
-                        </Button>
-                    </div>
-                </form>
-            </Form>
-        </FormProvider>
+                <FormField
+                    control={formMethods.control}
+                    name="pillarContent"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Pillar Content (HTML)</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="<h2>What is Productivity?</h2><p>Productivity is...</p>"
+                                    rows={12}
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                The comprehensive guide content (~3000 words). HTML is allowed.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <div className="flex justify-end pt-4">
+                    <Button type="submit">
+                        {initialData ? 'Update Skill' : 'Add Skill'}
+                    </Button>
+                </div>
+            </form>
+        </Form>
     );
 }
