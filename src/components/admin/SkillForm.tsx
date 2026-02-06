@@ -62,6 +62,7 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
         } : defaultFormValues,
     });
 
+    // useEffect for reset removed as defaultValues handles initialization
     React.useEffect(() => {
         if (initialData) {
             formMethods.reset({
@@ -72,9 +73,8 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
                 coverImage: initialData.coverImage || "",
                 icon: initialData.icon || "",
             });
-        } else {
-            formMethods.reset(defaultFormValues);
         }
+        // No else block needed; defaultValues handles the 'add' case
     }, [initialData, formMethods]);
 
     // Auto-generate slug from name
