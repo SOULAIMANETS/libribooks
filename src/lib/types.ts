@@ -30,6 +30,7 @@ export interface Article {
   date: string;
   skillSlug?: string;
   articleRole?: 'pillar-support' | 'comparison' | 'concept' | 'book-focused';
+  keywordLinks?: { keyword: string; url: string }[];
 }
 
 export interface Skill {

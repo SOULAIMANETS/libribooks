@@ -74,6 +74,32 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
     // Filter related articles for this skill
     const relatedArticles = allArticles.filter(a => a.skillSlug === skillSlug && a.slug !== article.slug).slice(0, 4);
 
+    // Function to inject auto-links into content
+    const injectAutoLinks = (content: string, links: { keyword: string; url: string }[]) => {
+        if (!links || links.length === 0) return content;
+
+        let processedContent = content;
+        // Sort by keyword length (longest first) to avoid matching sub-words incorrectly
+        const sortedLinks = [...links].sort((a, b) => b.keyword.length - a.keyword.length);
+
+        sortedLinks.forEach(({ keyword, url }) => {
+            // Regex to match the keyword outside of HTML tags
+            // Simplified approach: match keyword as a whole word, 
+            // ensuring it's not inside a tag (very basic implementation)
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(?<!<[^>]*)\\b${escapedKeyword}\\b(?![^<]*>)`, 'gu');
+
+            // Avoid double-linking if a keyword is already part of a link
+            processedContent = processedContent.replace(regex, (match) => {
+                return `<a href="${url}" class="text-primary hover:underline font-medium" target="_blank" rel="noopener noreferrer">${match}</a>`;
+            });
+        });
+
+        return processedContent;
+    };
+
+    const displayContent = injectAutoLinks(article.content, article.keywordLinks || []);
+
     return (
         <div className="flex flex-col min-h-screen">
             <JsonLd<SchemaArticle>
@@ -151,7 +177,7 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
                     {/* Content */}
                     <div
                         className="prose prose-lg dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-headline prose-ol:list-decimal prose-ul:list-disc"
-                        dangerouslySetInnerHTML={{ __html: article.content }}
+                        dangerouslySetInnerHTML={{ __html: displayContent }}
                     />
 
                     {/* Back to Skill Link */}

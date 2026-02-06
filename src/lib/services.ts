@@ -381,7 +381,8 @@ export const articleService = {
             coverImage: a.cover_image_url,
             author: a.author_name,
             skillSlug: a.skill_slug,
-            articleRole: a.article_role
+            articleRole: a.article_role,
+            keywordLinks: a.keyword_links || []
         }));
     },
 
@@ -398,7 +399,8 @@ export const articleService = {
             coverImage: a.cover_image_url,
             author: a.author_name,
             skillSlug: a.skill_slug,
-            articleRole: a.article_role
+            articleRole: a.article_role,
+            keywordLinks: a.keyword_links || []
         }));
     },
 
@@ -410,7 +412,8 @@ export const articleService = {
             coverImage: data.cover_image_url,
             author: data.author_name,
             skillSlug: data.skill_slug,
-            articleRole: data.article_role
+            articleRole: data.article_role,
+            keywordLinks: data.keyword_links || []
         };
     },
 
@@ -426,7 +429,8 @@ export const articleService = {
                 author_name: article.author,
                 date: article.date,
                 skill_slug: article.skillSlug,
-                article_role: article.articleRole
+                article_role: article.articleRole,
+                keyword_links: article.keywordLinks
             })
             .select()
             .single();
@@ -437,7 +441,8 @@ export const articleService = {
             coverImage: data.cover_image_url,
             author: data.author_name,
             skillSlug: data.skill_slug,
-            articleRole: data.article_role
+            articleRole: data.article_role,
+            keywordLinks: data.keyword_links || []
         };
     },
 
@@ -451,6 +456,7 @@ export const articleService = {
         if (article.date) updateData.date = article.date;
         if (article.skillSlug !== undefined) updateData.skill_slug = article.skillSlug;
         if (article.articleRole !== undefined) updateData.article_role = article.articleRole;
+        if (article.keywordLinks !== undefined) updateData.keyword_links = article.keywordLinks;
 
         const { data, error } = await supabase
             .from('articles')
@@ -465,7 +471,8 @@ export const articleService = {
             coverImage: data.cover_image_url,
             author: data.author_name,
             skillSlug: data.skill_slug,
-            articleRole: data.article_role
+            articleRole: data.article_role,
+            keywordLinks: data.keyword_links || []
         };
     },
 

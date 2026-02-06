@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Article, Skill } from "@/lib/types";
 import { ImageUpload } from "./ImageUpload";
 import { skillService } from "@/lib/services";
+import { AutoLinkManager } from "./AutoLinkManager";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -39,6 +40,10 @@ const formSchema = z.object({
   content: z.string().min(50, { message: "Content must be at least 50 characters." }),
   skillSlug: z.string().optional(),
   articleRole: z.string().optional(),
+  keywordLinks: z.array(z.object({
+    keyword: z.string(),
+    url: z.string()
+  })).optional().default([]),
 });
 
 type ArticleFormValues = z.infer<typeof formSchema>;
@@ -52,6 +57,7 @@ const defaultFormValues: ArticleFormValues = {
   content: "",
   skillSlug: "",
   articleRole: "pillar-support",
+  keywordLinks: [],
 };
 
 const ARTICLE_ROLES = [
@@ -77,7 +83,8 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
     const fetchSkills = async () => {
       try {
         const data = await skillService.getAll();
-        setSkills(data);
+        // Filter out skills that don't have a slug to prevent key errors or select issues
+        setSkills(data.filter(s => s.slug && s.slug.trim() !== ''));
       } catch (error) {
         console.error('Error fetching skills:', error);
       } finally {
@@ -98,6 +105,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
       content: initialData.content,
       skillSlug: initialData.skillSlug || "",
       articleRole: initialData.articleRole || "pillar-support",
+      keywordLinks: initialData.keywordLinks || [],
     } : defaultFormValues,
   });
 
@@ -112,6 +120,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
         content: initialData.content,
         skillSlug: initialData.skillSlug || "",
         articleRole: initialData.articleRole || "pillar-support",
+        keywordLinks: initialData.keywordLinks || [],
       });
     } else {
       formMethods.reset(defaultFormValues);
@@ -245,6 +254,23 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
           </div>
 
           <ImageUpload name="coverImage" label="Cover Image" currentValue={initialData?.coverImage} folder="articles" />
+
+          {/* AutoLink Manager */}
+          <FormField
+            control={formMethods.control}
+            name="keywordLinks"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <AutoLinkManager
+                    initialLinks={field.value}
+                    onChange={(links) => field.onChange(links)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={formMethods.control}
