@@ -55,7 +55,7 @@ const defaultFormValues: ArticleFormValues = {
   coverImage: "",
   excerpt: "",
   content: "",
-  skillSlug: "",
+  skillSlug: "none",
   articleRole: "pillar-support",
   keywordLinks: [],
 };
@@ -103,7 +103,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
       coverImage: initialData.coverImage,
       excerpt: initialData.excerpt,
       content: initialData.content,
-      skillSlug: initialData.skillSlug || "",
+      skillSlug: initialData.skillSlug || "none",
       articleRole: initialData.articleRole || "pillar-support",
       keywordLinks: initialData.keywordLinks || [],
     } : defaultFormValues,
@@ -118,7 +118,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
         coverImage: initialData.coverImage,
         excerpt: initialData.excerpt,
         content: initialData.content,
-        skillSlug: initialData.skillSlug || "",
+        skillSlug: initialData.skillSlug || "none",
         articleRole: initialData.articleRole || "pillar-support",
         keywordLinks: initialData.keywordLinks || [],
       });
@@ -130,7 +130,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
   const handleSubmit = (values: ArticleFormValues) => {
     const submitData = {
       ...values,
-      skillSlug: values.skillSlug || undefined,
+      skillSlug: values.skillSlug === "none" ? undefined : values.skillSlug,
       articleRole: values.articleRole as Article['articleRole'] || undefined,
     };
     onSubmit(submitData);
@@ -208,7 +208,7 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {skills.map((skill) => (
                         <SelectItem key={skill.slug} value={skill.slug}>
                           {skill.icon && `${skill.icon} `}{skill.name}
