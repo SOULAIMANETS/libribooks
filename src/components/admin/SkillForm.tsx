@@ -90,17 +90,26 @@ export function SkillForm({ initialData, onSubmit, onSuccess }: SkillFormProps) 
         }
     }, [watchName, initialData, formMethods]);
 
-    const handleSubmit = (values: SkillFormValues) => {
-        onSubmit(values as Omit<Skill, 'id'>);
+    const handleSubmit = async (values: SkillFormValues) => {
+        try {
+            await onSubmit(values as Omit<Skill, 'id'>);
 
-        toast({
-            title: `Skill ${initialData ? 'updated' : 'added'}!`,
-            description: `"${values.name}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
-        });
+            toast({
+                title: `Skill ${initialData ? 'updated' : 'added'}!`,
+                description: `"${values.name}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
+            });
 
-        onSuccess?.();
-        if (!initialData) {
-            formMethods.reset(defaultFormValues);
+            onSuccess?.();
+            if (!initialData) {
+                formMethods.reset(defaultFormValues);
+            }
+        } catch (error: any) {
+            console.error("Form submission error:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to save skill. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 
