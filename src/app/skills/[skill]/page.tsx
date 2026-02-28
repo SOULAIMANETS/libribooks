@@ -8,6 +8,7 @@ import { skillService, articleService } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
+import { ArticleCard } from '@/components/ArticleCard';
 
 interface PageProps {
     params: Promise<{ skill: string }>;
@@ -108,35 +109,7 @@ export default async function SkillPillarPage({ params }: PageProps) {
                                 <h2 className="text-3xl font-headline font-bold mb-8">Related Articles & Guides</h2>
                                 <div className="grid gap-6">
                                     {articles.map((article) => (
-                                        <Link key={article.slug} href={`/articles/${article.slug}`}>
-                                            <Card className="hover:shadow-md transition-shadow">
-                                                <CardContent className="p-6">
-                                                    <div className="flex gap-6">
-                                                        {article.coverImage && (
-                                                            <div className="hidden sm:block relative w-32 h-32 flex-shrink-0">
-                                                                <Image
-                                                                    src={article.coverImage}
-                                                                    alt={article.title}
-                                                                    fill
-                                                                    className="object-cover rounded-md"
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <div className="flex-grow">
-                                                            <h3 className="text-xl font-headline font-bold mb-2 group-hover:text-primary">
-                                                                {article.title}
-                                                            </h3>
-                                                            <p className="text-muted-foreground line-clamp-2 text-sm mb-4">
-                                                                {article.excerpt}
-                                                            </p>
-                                                            <div className="flex items-center text-primary text-sm font-medium">
-                                                                Read More <ArrowRight className="ml-2 h-4 w-4" />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </Link>
+                                        <ArticleCard key={article.slug} article={article} />
                                     ))}
 
                                     {articles.length === 0 && (
