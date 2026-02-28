@@ -73,7 +73,7 @@ const ARTICLE_ROLES = [
 
 interface ArticleFormProps {
   initialData?: Article | null;
-  onSubmit: (data: Omit<Article, 'slug'> | Article) => void;
+  onSubmit: (data: Omit<Article, 'slug'> | Article) => Promise<void>;
   onSuccess?: () => void;
 }
 
@@ -135,24 +135,33 @@ export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormPro
     }
   }, [initialData, formMethods]);
 
-  const handleSubmit = (values: ArticleFormValues) => {
-    const submitData = {
-      ...values,
-      skillSlug: values.skillSlug === "none" ? undefined : values.skillSlug,
-      articleRole: values.articleRole as Article['articleRole'] || undefined,
-      metaTitle: values.metaTitle || undefined,
-      metaDescription: values.metaDescription || undefined,
-    };
-    onSubmit(submitData);
+  const handleSubmit = async (values: ArticleFormValues) => {
+    try {
+      const submitData = {
+        ...values,
+        skillSlug: values.skillSlug === "none" ? undefined : values.skillSlug,
+        articleRole: values.articleRole as Article['articleRole'] || undefined,
+        metaTitle: values.metaTitle || undefined,
+        metaDescription: values.metaDescription || undefined,
+      };
+      await onSubmit(submitData);
 
-    toast({
-      title: `Article ${initialData ? 'updated' : 'added'}!`,
-      description: `"${values.title}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
-    });
+      toast({
+        title: `Article ${initialData ? 'updated' : 'added'}!`,
+        description: `"${values.title}" has been successfully ${initialData ? 'updated' : 'saved'}.`,
+      });
 
-    onSuccess?.();
-    if (!initialData) {
-      formMethods.reset(defaultFormValues);
+      onSuccess?.();
+      if (!initialData) {
+        formMethods.reset(defaultFormValues);
+      }
+    } catch (error: any) {
+      console.error("Error submitting article:", error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${initialData ? 'update' : 'add'} the article.`,
+        variant: 'destructive',
+      });
     }
   };
 

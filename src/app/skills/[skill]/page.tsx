@@ -46,8 +46,6 @@ export default async function SkillPillarPage({ params }: PageProps) {
     }
 
     const { skill, articles } = data;
-    const pillarPost = articles.find(a => a.articleRole === 'pillar-support') || articles[0];
-    const otherArticles = articles.filter(a => a.slug !== pillarPost?.slug);
 
     return (
         <div className="flex flex-col min-h-screen">
