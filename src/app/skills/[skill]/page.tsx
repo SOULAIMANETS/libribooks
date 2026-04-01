@@ -10,6 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
     params: Promise<{ skill: string }>;
 }
