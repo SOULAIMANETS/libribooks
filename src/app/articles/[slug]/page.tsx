@@ -11,6 +11,8 @@ import { Metadata } from 'next';
 import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle } from 'schema-dts';
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   const articles = await articleService.getAll();
   return articles
@@ -34,6 +36,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: article.title,
     description: article.excerpt,
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt,

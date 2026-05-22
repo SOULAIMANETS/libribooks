@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,6 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: pageData?.title || 'Cookie Policy',
     description: 'Read about how we use cookies on our website.',
+    alternates: {
+      canonical: '/cookie-policy',
+    },
   };
 };
 

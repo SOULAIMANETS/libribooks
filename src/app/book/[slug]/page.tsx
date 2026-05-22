@@ -1,7 +1,6 @@
 
 import { notFound } from 'next/navigation';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 import Image from 'next/image';
 import Link from 'next/link';
 import { bookService, authorService } from '@/lib/services';
@@ -48,6 +47,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${book.title} by ${authorNames} | Book Review`,
     description: description,
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: `${book.title} | libribooks.com`,
       description: description,

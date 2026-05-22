@@ -13,6 +13,9 @@ import { Person } from 'schema-dts';
 import type { Author, Book as BookType } from '@/lib/types';
 
 
+export const revalidate = 3600;
+
+
 export async function generateStaticParams() {
   const authors = await authorService.getAll();
   return authors
@@ -36,6 +39,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: author.name,
     description: author.bio.substring(0, 160),
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: author.name,
       description: author.bio.substring(0, 160),

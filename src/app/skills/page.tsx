@@ -10,10 +10,12 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 export const metadata: Metadata = {
     title: 'Skills - Master Life Through Reading',
     description: 'Explore our curated reading guides organized by skill. Find the right books to master productivity, psychology, money, and more.',
+    alternates: {
+        canonical: '/skills',
+    },
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
 export default async function SkillsPage() {
     const skills = await skillService.getAll();

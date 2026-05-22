@@ -12,6 +12,8 @@ import { Calendar, User, Home, ArrowRight } from 'lucide-react';
 import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle } from 'schema-dts';
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
     const categories = await categoryService.getAll();
     const params: { skill: string; article: string }[] = [];
@@ -31,7 +33,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ skill: string; article: string }> }): Promise<Metadata> {
-    const { article: articleSlug } = await params;
+    const { skill: skillSlug, article: articleSlug } = await params;
     const article = await articleService.getBySlug(articleSlug);
 
     if (!article) {
@@ -45,6 +47,9 @@ export async function generateMetadata({ params }: { params: Promise<{ skill: st
     return {
         title: seoTitle,
         description: seoDescription,
+        alternates: {
+            canonical: `/skills/${skillSlug}/${articleSlug}`,
+        },
         openGraph: {
             title: seoTitle,
             description: seoDescription,

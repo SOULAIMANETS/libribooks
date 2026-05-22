@@ -12,7 +12,7 @@ import { JsonLd } from 'react-schemaorg';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,6 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: pageData?.title || 'Frequently Asked Questions',
     description: 'Find answers to common questions about libribooks.com, our review process, and how our site works.',
+    alternates: {
+      canonical: '/faq',
+    },
   };
 };
 

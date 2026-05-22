@@ -7,6 +7,9 @@ import { CheckCircle2, ShieldCheck, Star, Target, Users } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'How We Choose - Our Book Selection Methodology | Libribooks',
   description: 'Learn about our rigorous selection process for books. We prioritize quality, impact, and actionable insights to help you master life skills.',
+  alternates: {
+    canonical: '/how-we-choose',
+  },
 };
 
 export default function HowWeChoosePage() {

@@ -10,8 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
 interface PageProps {
     params: Promise<{ skill: string }>;
@@ -33,6 +32,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
         title: `${skill.name} - Master this Skill | Libribooks`,
         description: skill.description,
+        alternates: {
+            canonical: `/skills/${skill.slug}`,
+        },
         openGraph: {
             title: skill.name,
             description: skill.description,

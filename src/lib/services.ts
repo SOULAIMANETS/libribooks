@@ -1,94 +1,83 @@
 import { supabase } from './supabase';
 import type { Book, Author, Article, Category, Tag, Page, PopupAd, Message, Skill } from './types';
 
+// Simple in-memory cache for service calls during build/request lifetime
+class SimpleCache {
+    private cache = new Map<string, { value: any; expiry: number }>();
+    private ttl: number;
+
+    constructor(ttlSeconds = 10) {
+        this.ttl = ttlSeconds * 1000;
+    }
+
+    async get<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
+        const cached = this.cache.get(key);
+        const now = Date.now();
+        if (cached && cached.expiry > now) {
+            return cached.value as T;
+        }
+        const value = await fetchFn();
+        this.cache.set(key, { value, expiry: Date.now() + this.ttl });
+        return value;
+    }
+
+    clear() {
+        this.cache.clear();
+    }
+}
+
+const serviceCache = new SimpleCache(10); // 10 seconds TTL
+
 export const bookService = {
     async getAll(): Promise<Book[]> {
-        const { data, error } = await supabase
-            .from('books')
-            .select(`
-        *,
-        categories(name),
-        authors:book_authors(authors(*)),
-        tags:book_tags(tags(name))
-      `)
-            .order('id', { ascending: false });
+        return serviceCache.get('books:all', async () => {
+            const { data, error } = await supabase
+                .from('books')
+                .select(`
+            *,
+            categories(name),
+            authors:book_authors(authors(*)),
+            tags:book_tags(tags(name))
+          `)
+                .order('id', { ascending: false });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        return data.map(book => ({
-            ...book,
-            category: book.categories?.name,
-            authors: book.authors.map((a: any) => a.authors.name),
-            authorIds: book.authors.map((a: any) => a.authors.id),
-            tags: book.tags.map((t: any) => t.tags.name),
-            coverImage: book.cover_image_url,
-            purchaseUrls: book.purchase_urls,
-            slug: book.slug || book.id.toString(),
-            faq: book.faq
-        }));
+            return data.map(book => ({
+                ...book,
+                category: book.categories?.name,
+                authors: book.authors.map((a: any) => a.authors.name),
+                authorIds: book.authors.map((a: any) => a.authors.id),
+                tags: book.tags.map((t: any) => t.tags.name),
+                coverImage: book.cover_image_url,
+                purchaseUrls: book.purchase_urls,
+                slug: book.slug || book.id.toString(),
+                faq: book.faq
+            }));
+        });
     },
 
     async getById(id: number | string): Promise<Book | null> {
-        const { data, error } = await supabase
-            .from('books')
-            .select(`
-        *,
-        categories(name),
-        authors:book_authors(authors(*)),
-        tags:book_tags(tags(name))
-      `)
-            .eq('id', id)
-            .single();
-
-        if (error) return null;
-
-        return {
-            ...data,
-            category: data.categories?.name,
-            authors: data.authors.map((a: any) => a.authors.name),
-            authorIds: data.authors.map((a: any) => a.authors.id),
-            tags: data.tags.map((t: any) => t.tags.name),
-            coverImage: data.cover_image_url,
-            purchaseUrls: data.purchase_urls,
-            slug: data.slug || data.id.toString(),
-            faq: data.faq
-        };
+        const idStr = id.toString();
+        const books = await this.getAll();
+        return books.find(b => b.id.toString() === idStr) || null;
     },
 
     async getBySlug(slug: string): Promise<Book | null> {
-        const { data, error } = await supabase
-            .from('books')
-            .select(`
-        *,
-        categories(name),
-        authors:book_authors(authors(*)),
-        tags:book_tags(tags(name))
-      `)
-            .eq('slug', slug)
-            .single();
-
-        if (error) {
+        const books = await this.getAll();
+        const book = books.find(b => b.slug === slug);
+        if (!book) {
             // Fallback to ID if slug is numeric
             if (!isNaN(Number(slug))) {
                 return this.getById(slug);
             }
             return null;
         }
-
-        return {
-            ...data,
-            category: data.categories?.name,
-            authors: data.authors.map((a: any) => a.authors.name),
-            authorIds: data.authors.map((a: any) => a.authors.id),
-            tags: data.tags.map((t: any) => t.tags.name),
-            coverImage: data.cover_image_url,
-            purchaseUrls: data.purchase_urls,
-            slug: data.slug,
-            faq: data.faq
-        };
+        return book;
     },
 
     async create(book: Omit<Book, 'id'>): Promise<Book> {
+        serviceCache.clear();
         const { data: categoryData } = await supabase
             .from('categories')
             .select('id')
@@ -136,6 +125,7 @@ export const bookService = {
     },
 
     async update(id: number, book: Partial<Book>): Promise<Book> {
+        serviceCache.clear();
         const updateData: any = {};
         if (book.title !== undefined) updateData.title = book.title;
         if (book.coverImage !== undefined) updateData.cover_image_url = book.coverImage;
@@ -180,6 +170,7 @@ export const bookService = {
     },
 
     async delete(id: number): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('books').delete().eq('id', id);
         if (error) throw error;
     }
@@ -187,42 +178,38 @@ export const bookService = {
 
 export const authorService = {
     async getAll(): Promise<Author[]> {
-        const { data, error } = await supabase.from('authors').select('*').order('name');
-        if (error) throw error;
-        return data.map(a => ({
-            ...a,
-            image: a.image_url,
-            slug: a.slug || a.id.toString()
-        }));
+        return serviceCache.get('authors:all', async () => {
+            const { data, error } = await supabase.from('authors').select('*').order('name');
+            if (error) throw error;
+            return data.map(a => ({
+                ...a,
+                image: a.image_url,
+                slug: a.slug || a.id.toString()
+            }));
+        });
     },
 
     async getById(id: number | string): Promise<Author | null> {
-        const { data, error } = await supabase.from('authors').select('*').eq('id', id).single();
-        if (error) return null;
-        return {
-            ...data,
-            image: data.image_url,
-            slug: data.slug || data.id.toString()
-        };
+        const idStr = id.toString();
+        const authors = await this.getAll();
+        return authors.find(a => a.id.toString() === idStr) || null;
     },
 
     async getBySlug(slug: string): Promise<Author | null> {
-        const { data, error } = await supabase.from('authors').select('*').eq('slug', slug).single();
-        if (error) {
+        const authors = await this.getAll();
+        const author = authors.find(a => a.slug === slug);
+        if (!author) {
             // Fallback to ID if slug is numeric or not found
             if (!isNaN(Number(slug))) {
                 return this.getById(slug);
             }
             return null;
         }
-        return {
-            ...data,
-            image: data.image_url,
-            slug: data.slug || data.id.toString()
-        };
+        return author;
     },
 
     async create(author: Omit<Author, 'id'>): Promise<Author> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('authors')
             .insert({
@@ -239,6 +226,7 @@ export const authorService = {
     },
 
     async update(id: number, author: Partial<Author>): Promise<Author> {
+        serviceCache.clear();
         const updateData: any = {};
         if (author.name) updateData.name = author.name;
         if (author.slug) updateData.slug = author.slug;
@@ -257,6 +245,7 @@ export const authorService = {
     },
 
     async delete(id: number): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('authors').delete().eq('id', id);
         if (error) throw error;
     }
@@ -264,53 +253,31 @@ export const authorService = {
 
 export const categoryService = {
     async getAll(): Promise<Category[]> {
-        const { data, error } = await supabase.from('categories').select('*').order('name');
-        if (error) throw error;
-        return data.map(c => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: c.description || `Curated ${c.name} books and guides to help you master the skill.`,
-            icon: c.icon,
-            pillarContent: c.pillar_content,
-            coverImage: c.cover_image_url
-        }));
+        return serviceCache.get('categories:all', async () => {
+            const { data, error } = await supabase.from('categories').select('*').order('name');
+            if (error) throw error;
+            return data.map(c => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+                description: c.description || `Curated ${c.name} books and guides to help you master the skill.`,
+                icon: c.icon,
+                pillarContent: c.pillar_content,
+                coverImage: c.cover_image_url
+            }));
+        });
     },
 
     async getBySlug(slug: string): Promise<Category | null> {
-        // First try to find by slug column
-        const { data, error } = await supabase.from('categories').select('*').eq('slug', slug).single();
-
-        if (error) {
-            // Fallback: find by matching name-derived slug
-            const allCategories = await this.getAll();
-            const match = allCategories.find(c => c.slug === slug);
-            return match || null;
-        }
-
-        return {
-            id: data.id,
-            name: data.name,
-            slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: data.description || `Curated ${data.name} books and guides to help you master the skill.`,
-            icon: data.icon,
-            pillarContent: data.pillar_content,
-            coverImage: data.cover_image_url
-        };
+        const allCategories = await this.getAll();
+        const match = allCategories.find(c => c.slug === slug);
+        return match || null;
     },
 
     async getByName(name: string): Promise<Category | null> {
-        const { data, error } = await supabase.from('categories').select('*').eq('name', name).single();
-        if (error) return null;
-        return {
-            id: data.id,
-            name: data.name,
-            slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            description: data.description || `Curated ${data.name} books and guides to help you master the skill.`,
-            icon: data.icon,
-            pillarContent: data.pillar_content,
-            coverImage: data.cover_image_url
-        };
+        const allCategories = await this.getAll();
+        const match = allCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
+        return match || null;
     },
 
     async getWithBooks(slug: string): Promise<{ category: Category; books: Book[] } | null> {
@@ -324,6 +291,7 @@ export const categoryService = {
     },
 
     async create(category: Omit<Category, 'id'>): Promise<Category> {
+        serviceCache.clear();
         const { data, error } = await supabase.from('categories').insert({
             name: category.name,
             slug: category.slug,
@@ -345,6 +313,7 @@ export const categoryService = {
     },
 
     async update(id: number, category: Partial<Category>): Promise<Category> {
+        serviceCache.clear();
         const updateData: any = {};
         if (category.name) updateData.name = category.name;
         if (category.slug) updateData.slug = category.slug;
@@ -367,6 +336,7 @@ export const categoryService = {
     },
 
     async delete(id: number): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('categories').delete().eq('id', id);
         if (error) throw error;
     }
@@ -374,67 +344,40 @@ export const categoryService = {
 
 export const articleService = {
     async getAll(options: { includeScheduled?: boolean } = {}): Promise<Article[]> {
-        let query = supabase.from('articles').select('*');
+        const allArticles = await serviceCache.get('articles:all', async () => {
+            const { data, error } = await supabase.from('articles').select('*').order('date', { ascending: false });
+            if (error) throw error;
+            return data.map(a => ({
+                ...a,
+                coverImage: a.cover_image_url,
+                author: a.author_name,
+                skillSlug: a.skill_slug,
+                articleRole: a.article_role,
+                keywordLinks: a.keyword_links || [],
+                metaTitle: a.meta_title,
+                metaDescription: a.meta_description
+            }));
+        });
 
         if (!options.includeScheduled) {
-            query = query.lte('date', new Date().toISOString());
+            const now = new Date().toISOString();
+            return allArticles.filter(a => a.date <= now);
         }
-
-        const { data, error } = await query.order('date', { ascending: false });
-        if (error) throw error;
-        return data.map(a => ({
-            ...a,
-            coverImage: a.cover_image_url,
-            author: a.author_name,
-            skillSlug: a.skill_slug,
-            articleRole: a.article_role,
-            keywordLinks: a.keyword_links || [],
-            metaTitle: a.meta_title,
-            metaDescription: a.meta_description
-        }));
+        return allArticles;
     },
 
     async getBySkill(skillSlug: string, options: { includeScheduled?: boolean } = {}): Promise<Article[]> {
-        let query = supabase
-            .from('articles')
-            .select('*')
-            .eq('skill_slug', skillSlug);
-
-        if (!options.includeScheduled) {
-            query = query.lte('date', new Date().toISOString());
-        }
-
-        const { data, error } = await query.order('date', { ascending: false });
-
-        if (error) throw error;
-        return data.map(a => ({
-            ...a,
-            coverImage: a.cover_image_url,
-            author: a.author_name,
-            skillSlug: a.skill_slug,
-            articleRole: a.article_role,
-            keywordLinks: a.keyword_links || [],
-            metaTitle: a.meta_title,
-            metaDescription: a.meta_description
-        }));
+        const articles = await this.getAll(options);
+        return articles.filter(a => a.skillSlug === skillSlug);
     },
 
     async getBySlug(slug: string): Promise<Article | null> {
-        const { data, error } = await supabase.from('articles').select('*').eq('slug', slug).single();
-        if (error) return null;
-        return {
-            ...data,
-            coverImage: data.cover_image_url,
-            author: data.author_name,
-            skillSlug: data.skill_slug,
-            articleRole: data.article_role,
-            keywordLinks: data.keyword_links || [],
-            metaTitle: data.meta_title,
-            metaDescription: data.meta_description
-        };
+        const articles = await this.getAll({ includeScheduled: true });
+        return articles.find(a => a.slug === slug) || null;
     },
 
     async create(article: Article): Promise<Article> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('articles')
             .insert({
@@ -468,6 +411,7 @@ export const articleService = {
     },
 
     async update(slug: string, article: Partial<Article>): Promise<Article> {
+        serviceCache.clear();
         const updateData: any = {};
         if (article.title) updateData.title = article.title;
         if (article.excerpt) updateData.excerpt = article.excerpt;
@@ -502,6 +446,7 @@ export const articleService = {
     },
 
     async delete(slug: string): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('articles').delete().eq('slug', slug);
         if (error) throw error;
     }
@@ -509,23 +454,20 @@ export const articleService = {
 
 export const skillService = {
     async getAll(): Promise<Skill[]> {
-        const { data, error } = await supabase.from('skills').select('*').order('name');
-        if (error) throw error;
-        return data.map(s => ({
-            ...s,
-            pillarContent: s.pillar_content,
-            coverImage: s.cover_image_url
-        }));
+        return serviceCache.get('skills:all', async () => {
+            const { data, error } = await supabase.from('skills').select('*').order('name');
+            if (error) throw error;
+            return data.map(s => ({
+                ...s,
+                pillarContent: s.pillar_content,
+                coverImage: s.cover_image_url
+            }));
+        });
     },
 
     async getBySlug(slug: string): Promise<Skill | null> {
-        const { data, error } = await supabase.from('skills').select('*').eq('slug', slug).single();
-        if (error) return null;
-        return {
-            ...data,
-            pillarContent: data.pillar_content,
-            coverImage: data.cover_image_url
-        };
+        const all = await this.getAll();
+        return all.find(s => s.slug === slug) || null;
     },
 
     async getWithBooks(slug: string): Promise<{ skill: Skill; books: Book[] } | null> {
@@ -533,8 +475,6 @@ export const skillService = {
         if (!skill) return null;
 
         const books = await bookService.getAll();
-        // Filter books where the category name matches the skill name
-        // This assumes a convention where Skill Name == Category Name
         const skillBooks = books.filter(book => book.category === skill.name);
 
         return { skill, books: skillBooks };
@@ -549,6 +489,7 @@ export const skillService = {
     },
 
     async create(skill: Omit<Skill, 'id'>): Promise<Skill> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('skills')
             .insert({
@@ -571,6 +512,7 @@ export const skillService = {
     },
 
     async update(slug: string, skill: Partial<Skill>): Promise<Skill> {
+        serviceCache.clear();
         const updateData: any = {};
         if (skill.name !== undefined) updateData.name = skill.name;
         if (skill.description !== undefined) updateData.description = skill.description;
@@ -594,6 +536,7 @@ export const skillService = {
     },
 
     async delete(slug: string): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('skills').delete().eq('slug', slug);
         if (error) throw error;
     }
@@ -601,24 +544,23 @@ export const skillService = {
 
 export const pageService = {
     async getAll(): Promise<Page[]> {
-        const { data, error } = await supabase.from('pages').select('*').order('title');
-        if (error) throw error;
-        return data.map(p => ({
-            ...p,
-            structuredContent: p.structured_content
-        }));
+        return serviceCache.get('pages:all', async () => {
+            const { data, error } = await supabase.from('pages').select('*').order('title');
+            if (error) throw error;
+            return data.map(p => ({
+                ...p,
+                structuredContent: p.structured_content
+            }));
+        });
     },
 
     async getBySlug(slug: string): Promise<Page | null> {
-        const { data, error } = await supabase.from('pages').select('*').eq('slug', slug).single();
-        if (error) return null;
-        return {
-            ...data,
-            structuredContent: data.structured_content
-        };
+        const all = await this.getAll();
+        return all.find(p => p.slug === slug) || null;
     },
 
     async create(page: Page): Promise<Page> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('pages')
             .insert({
@@ -635,6 +577,7 @@ export const pageService = {
     },
 
     async update(slug: string, page: Partial<Page>): Promise<Page> {
+        serviceCache.clear();
         const updateData: any = {};
         if (page.title) updateData.title = page.title;
         if (page.content) updateData.content = page.content;
@@ -652,6 +595,7 @@ export const pageService = {
     },
 
     async delete(slug: string): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('pages').delete().eq('slug', slug);
         if (error) throw error;
     }
@@ -659,28 +603,25 @@ export const pageService = {
 
 export const popupAdService = {
     async getAll(): Promise<PopupAd[]> {
-        const { data, error } = await supabase.from('popup_ads').select('*').order('id', { ascending: false });
-        if (error) throw error;
-        return data.map(ad => ({
-            ...ad,
-            displayDelay: ad.display_delay,
-            displayDuration: ad.display_duration,
-            isActive: ad.is_active
-        }));
+        return serviceCache.get('popupAds:all', async () => {
+            const { data, error } = await supabase.from('popup_ads').select('*').order('id', { ascending: false });
+            if (error) throw error;
+            return data.map(ad => ({
+                ...ad,
+                displayDelay: ad.display_delay,
+                displayDuration: ad.display_duration,
+                isActive: ad.is_active
+            }));
+        });
     },
 
     async getActive(): Promise<PopupAd[]> {
-        const { data, error } = await supabase.from('popup_ads').select('*').eq('is_active', true);
-        if (error) throw error;
-        return data.map(ad => ({
-            ...ad,
-            displayDelay: ad.display_delay,
-            displayDuration: ad.display_duration,
-            isActive: ad.is_active
-        }));
+        const all = await this.getAll();
+        return all.filter(ad => ad.isActive);
     },
 
     async create(ad: Omit<PopupAd, 'id'>): Promise<PopupAd> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('popup_ads')
             .insert({
@@ -703,6 +644,7 @@ export const popupAdService = {
     },
 
     async update(id: number, ad: Partial<PopupAd>): Promise<PopupAd> {
+        serviceCache.clear();
         const updateData: any = {};
         if (ad.name) updateData.name = ad.name;
         if (ad.content) updateData.content = ad.content;
@@ -727,6 +669,7 @@ export const popupAdService = {
     },
 
     async delete(id: number): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('popup_ads').delete().eq('id', id);
         if (error) throw error;
     }
@@ -734,24 +677,29 @@ export const popupAdService = {
 
 export const tagService = {
     async getAll(): Promise<Tag[]> {
-        const { data, error } = await supabase.from('tags').select('*').order('name');
-        if (error) throw error;
-        return data;
+        return serviceCache.get('tags:all', async () => {
+            const { data, error } = await supabase.from('tags').select('*').order('name');
+            if (error) throw error;
+            return data;
+        });
     },
 
     async create(tag: Omit<Tag, 'id'>): Promise<Tag> {
+        serviceCache.clear();
         const { data, error } = await supabase.from('tags').insert(tag).select().single();
         if (error) throw error;
         return data;
     },
 
     async update(id: number, tag: Partial<Tag>): Promise<Tag> {
+        serviceCache.clear();
         const { data, error } = await supabase.from('tags').update(tag).eq('id', id).select().single();
         if (error) throw error;
         return data;
     },
 
     async delete(id: number): Promise<void> {
+        serviceCache.clear();
         const { error } = await supabase.from('tags').delete().eq('id', id);
         if (error) throw error;
     }
@@ -818,24 +766,26 @@ export const userService = {
 
 
 export const settingsService = {
-    async get(key: string): Promise<any> {
-        const { data, error } = await supabase.from('settings').select('value').eq('key', key).single();
-        if (error) return null;
-        return data.value;
+    async getAll(): Promise<Record<string, any>> {
+        return serviceCache.get('settings:all', async () => {
+            const { data, error } = await supabase.from('settings').select('*');
+            if (error) throw error;
+
+            const settingsMap: Record<string, any> = {};
+            data.forEach(item => {
+                settingsMap[item.key] = item.value;
+            });
+            return settingsMap;
+        });
     },
 
-    async getAll(): Promise<Record<string, any>> {
-        const { data, error } = await supabase.from('settings').select('*');
-        if (error) throw error;
-
-        const settingsMap: Record<string, any> = {};
-        data.forEach(item => {
-            settingsMap[item.key] = item.value;
-        });
-        return settingsMap;
+    async get(key: string): Promise<any> {
+        const settings = await this.getAll();
+        return settings[key] ?? null;
     },
 
     async upsert(key: string, value: any): Promise<any> {
+        serviceCache.clear();
         const { data, error } = await supabase
             .from('settings')
             .upsert({ key, value, updated_at: new Date().toISOString() })

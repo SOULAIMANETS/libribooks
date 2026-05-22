@@ -13,10 +13,12 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Articles',
   description: 'Explore our collection of articles on literature, reading habits, and the world of books.',
+  alternates: {
+    canonical: '/articles',
+  },
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
 export default async function ArticlesPage() {
   const articles = await articleService.getAll();

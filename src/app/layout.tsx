@@ -1,13 +1,12 @@
 
-import type { Metadata } from 'next';
-import { Literata, Space_Grotesk, Inter, Montserrat, Roboto, Lora } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Literata, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { JsonLd } from 'react-schemaorg';
 import { WebSite } from 'schema-dts';
-import { appearanceSettings } from '@/lib/siteConfig';
 import { PopupContainer } from '@/components/PopupContainer';
 import { popupAdService, settingsService } from '@/lib/services';
 import { SiteSettingsProvider } from '@/components/SiteSettingsContext';
@@ -20,18 +19,6 @@ const spaceGrotesk = Space_Grotesk({
   weight: ['500', '700'],
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  variable: '--font-montserrat',
-  display: 'swap',
-});
-
 const literata = Literata({
   subsets: ['latin'],
   variable: '--font-literata',
@@ -39,31 +26,20 @@ const literata = Literata({
   weight: ['400', '700'],
 });
 
-const roboto = Roboto({
-  subsets: ['latin'],
-  variable: '--font-roboto',
-  weight: ['400', '700'],
-  display: 'swap',
-});
+const headlineFont = spaceGrotesk;
+const bodyFont = literata;
 
-const lora = Lora({
-  subsets: ['latin'],
-  variable: '--font-lora',
-  display: 'swap',
-});
-
-
-const fontMapper = {
-  space_grotesk: spaceGrotesk,
-  inter: inter,
-  montserrat: montserrat,
-  literata: literata,
-  roboto: roboto,
-  lora: lora,
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#030711' },
+  ],
 }
 
-const headlineFont = fontMapper[appearanceSettings.headlineFont as keyof typeof fontMapper];
-const bodyFont = fontMapper[appearanceSettings.bodyFont as keyof typeof fontMapper];
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, seoSettings, integrations] = await Promise.all([
@@ -137,7 +113,8 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={cn(headlineFont.variable, bodyFont.variable)}>
-      <head>
+      <head />
+      <body className={cn('font-body antialiased min-h-screen flex flex-col')}>
         {enableSchema && (
           <JsonLd<WebSite>
             item={{
@@ -154,23 +131,30 @@ export default async function RootLayout({
           />
         )}
         {integrations?.googleTagManagerId && (
-          <Script id="gtm-script" strategy="afterInteractive">
-            {`
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','${integrations.googleTagManagerId}');
-            `}
-          </Script>
+          <>
+            <Script id="gtm-script" strategy="lazyOnload">
+              {`
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','${integrations.googleTagManagerId}');
+              `}
+            </Script>
+            <noscript
+              dangerouslySetInnerHTML={{
+                __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${integrations.googleTagManagerId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+              }}
+            />
+          </>
         )}
         {integrations?.googleAnalyticsId && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${integrations.googleAnalyticsId}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
-            <Script id="ga-script" strategy="afterInteractive">
+            <Script id="ga-script" strategy="lazyOnload">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
@@ -179,15 +163,6 @@ export default async function RootLayout({
               `}
             </Script>
           </>
-        )}
-      </head>
-      <body className={cn('font-body antialiased min-h-screen flex flex-col')}>
-        {integrations?.googleTagManagerId && (
-          <noscript
-            dangerouslySetInnerHTML={{
-              __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${integrations.googleTagManagerId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
-            }}
-          />
         )}
         <ThemeProvider
           attribute="class"
