@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          {
+            key: 'Link',
+            value: '<https://klwexowmvxurphajwlyk.supabase.co>; rel=preconnect',
+          },
         ],
       },
       {

@@ -1,0 +1,5 @@
+﻿User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /editor/
+Sitemap: https://www.libribooks.com/sitemap.xml

@@ -14,3 +14,5 @@ if (slug.replace(/-/g, '').length === 0) {
 } else {
     console.log("SUCCESS: Slug generated.");
 }
+
+export {};

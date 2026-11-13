@@ -8,8 +8,9 @@
  * - GenerateBookDataOutput - The return type for the generateBookData function.
  */
 
+/* eslint-disable */
+import {z} from 'zod';
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
 
 const GenerateBookDataInputSchema = z.object({
   title: z.string().describe('The title of the book.'),
@@ -52,7 +53,7 @@ const generateBookDataFlow = ai.defineFlow(
     inputSchema: GenerateBookDataInputSchema,
     outputSchema: GenerateBookDataOutputSchema,
   },
-  async input => {
+  async (input: GenerateBookDataInput) => {
     const {output} = await prompt(input);
     return output!;
   }

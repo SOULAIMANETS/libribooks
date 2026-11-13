@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowRight, Home, BookOpen } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 interface PageProps {
     params: Promise<{ skill: string }>;
@@ -35,7 +35,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         alternates: {
             canonical: `/skills/${skill.slug}`,
         },
+        other: {
+            'ai-summary': skill.description,
+        },
         openGraph: {
+            title: skill.name,
+            description: skill.description,
+            type: 'website',
+            url: `https://www.libribooks.com/skills/${skill.slug}`,
+            images: skill.coverImage ? [skill.coverImage] : [],
+        },
+        twitter: {
+            card: 'summary_large_image',
             title: skill.name,
             description: skill.description,
             images: skill.coverImage ? [skill.coverImage] : [],

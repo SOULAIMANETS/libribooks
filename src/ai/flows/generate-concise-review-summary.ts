@@ -8,8 +8,8 @@
  * - GenerateConciseReviewSummaryOutput - The return type for the generateConciseReviewSummary function.
  */
 
+import {z} from 'zod';
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
 
 const GenerateConciseReviewSummaryInputSchema = z.object({
   reviewTitle: z.string().describe('The title of the book review.'),
@@ -54,7 +54,7 @@ const generateConciseReviewSummaryFlow = ai.defineFlow(
     inputSchema: GenerateConciseReviewSummaryInputSchema,
     outputSchema: GenerateConciseReviewSummaryOutputSchema,
   },
-  async input => {
+  async (input: GenerateConciseReviewSummaryInput) => {
     const {output} = await prompt(input);
     return output!;
   }

@@ -45,7 +45,7 @@ async function main() {
     if (updateError) {
       console.log(`  ✗ Update failed for ${cover.slug}: ${updateError.message}`);
     } else {
-      console.log(`  ✓ Successfully updated: ${cover.name || cover.slug}`);
+      console.log(`  ✓ Successfully updated: ${cover.slug}`);
     }
   }
 

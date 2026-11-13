@@ -12,7 +12,7 @@ import { JsonLd } from 'react-schemaorg';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,6 +22,20 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Find answers to common questions about libribooks.com, our review process, and how our site works.',
     alternates: {
       canonical: '/faq',
+    },
+    other: {
+      'ai-summary': 'Frequently asked questions about libribooks.com, our review process, and how the site works.',
+    },
+    openGraph: {
+      title: pageData?.title || 'FAQ | libribooks.com',
+      description: 'Find answers to common questions about libribooks.com.',
+      type: 'website',
+      url: 'https://www.libribooks.com/faq',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageData?.title || 'FAQ | libribooks.com',
+      description: 'Find answers to common questions about libribooks.com.',
     },
   };
 };
@@ -49,6 +63,10 @@ export default async function FAQPage() {
               text: item.answer,
             },
           } as Question)),
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: ['.accordion-trigger', '.accordion-content'],
+          },
         }}
       />
       <Header />

@@ -121,6 +121,7 @@ export function BooksTable() {
                 try {
                     const newAuthor = await authorService.create({
                         name: trimmedName,
+                        slug: trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
                         bio: `An up and coming author, ${trimmedName} is making waves in the literary world.`,
                         image: `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000)}`
                     });

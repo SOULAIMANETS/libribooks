@@ -64,8 +64,9 @@ async function runTest() {
             console.log("   ✅ UPSERT SUCCESS:", data);
         }
 
-    } catch (err) {
-        console.error("Test failed with exception:", err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Test failed with exception:", message);
     } finally {
         if (userId) {
             console.log("4. Cleaning up test user...");
@@ -78,3 +79,5 @@ async function runTest() {
 }
 
 runTest();
+
+export {};

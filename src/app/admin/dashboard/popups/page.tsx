@@ -105,7 +105,7 @@ export default function PopupsDashboardPage() {
 
     const updatePopup = async (updatedPopup: PopupAd) => {
         try {
-            await popupAdService.update(updatedPopup.id, updatedPopup);
+            await popupAdService.update(updatedPopup.id!, updatedPopup);
             await fetchPopups();
             setEditingPopup(null);
             toast({
@@ -189,7 +189,7 @@ export default function PopupsDashboardPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => toggleActive(popup.id)}>
+                            <DropdownMenuItem onClick={() => toggleActive(popup.id!)}>
                                 {popup.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setEditingPopup(popup)}>
@@ -282,7 +282,7 @@ export default function PopupsDashboardPage() {
                         <AlertDialogCancel onClick={() => setDeletingPopup(null)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => {
                             if (deletingPopup) {
-                                deletePopup(deletingPopup.id);
+                                deletePopup(deletingPopup.id!);
                                 setDeletingPopup(null);
                             }
                         }}>

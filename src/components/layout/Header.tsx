@@ -33,7 +33,7 @@ export function Header() {
           {logoUrl ? (
             <>
               <div className="relative h-10 w-auto">
-                <img src={logoUrl} alt={siteName} className="h-full w-auto object-contain" />
+                <Image src={logoUrl} alt={siteName} fill className="object-contain" sizes="100px" />
               </div>
               <span>{siteName}</span>
             </>

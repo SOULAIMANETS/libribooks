@@ -12,7 +12,7 @@ import { Calendar, User, Home, ArrowRight } from 'lucide-react';
 import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle } from 'schema-dts';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
     const categories = await categoryService.getAll();
@@ -50,12 +50,16 @@ export async function generateMetadata({ params }: { params: Promise<{ skill: st
         alternates: {
             canonical: `/skills/${skillSlug}/${articleSlug}`,
         },
+        other: {
+            'ai-summary': article.ai_summary || seoDescription,
+        },
         openGraph: {
             title: seoTitle,
             description: seoDescription,
             type: 'article',
             publishedTime: new Date(article.date).toISOString(),
             authors: [article.author],
+            url: `https://www.libribooks.com/skills/${skillSlug}/${articleSlug}`,
             images: article.coverImage ? [{ url: article.coverImage }] : [],
         },
         twitter: {
@@ -124,8 +128,13 @@ export default async function SkillArticlePage({ params }: { params: Promise<{ s
                     },
                     image: article.coverImage,
                     datePublished: new Date(article.date).toISOString(),
+                    dateModified: new Date(article.date).toISOString(),
                     description: article.excerpt,
-                }}
+                    speakable: {
+                        '@type': 'SpeakableSpecification',
+                        cssSelector: ['.prose', '[data-ai-hint="article hero"]'],
+                    },
+                } as any}
             />
             <Header />
             <main className="flex-1 w-full py-8">

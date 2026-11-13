@@ -11,7 +11,7 @@ import { Metadata } from 'next';
 import { JsonLd } from 'react-schemaorg';
 import { Article as SchemaArticle } from 'schema-dts';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const articles = await articleService.getAll();
@@ -38,6 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: article.excerpt,
     alternates: {
       canonical: pageUrl,
+    },
+    other: {
+      'ai-summary': article.ai_summary || article.excerpt,
     },
     openGraph: {
       title: article.title,
@@ -88,8 +91,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           },
           image: article.coverImage,
           datePublished: new Date(article.date).toISOString(),
+          dateModified: new Date(article.date).toISOString(),
           description: article.excerpt,
-        }}
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: ['.prose', '[data-ai-hint="article hero"]'],
+          },
+        } as any}
       />
       <Header />
       <main className="flex-1 w-full py-12">

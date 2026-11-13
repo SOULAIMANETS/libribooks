@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 import { pageService, settingsService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const pageData = await pageService.getBySlug('contact');
@@ -16,6 +16,20 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Get in touch with the libribooks.com team. We\'d love to hear from you!',
     alternates: {
       canonical: '/contact',
+    },
+    other: {
+      'ai-summary': 'Contact the libribooks.com team. Get in touch for support, inquiries, and feedback.',
+    },
+    openGraph: {
+      title: pageData?.title || 'Contact Us | libribooks.com',
+      description: 'Get in touch with the libribooks.com team.',
+      type: 'website',
+      url: 'https://www.libribooks.com/contact',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageData?.title || 'Contact Us | libribooks.com',
+      description: 'Get in touch with the libribooks.com team.',
     },
   };
 }

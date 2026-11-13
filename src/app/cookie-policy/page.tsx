@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,6 +14,20 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Read about how we use cookies on our website.',
     alternates: {
       canonical: '/cookie-policy',
+    },
+    other: {
+      'ai-summary': 'Read about how we use cookies on our website.',
+    },
+    openGraph: {
+      title: pageData?.title || 'Cookie Policy | libribooks.com',
+      description: 'Read about how we use cookies on our website.',
+      type: 'website',
+      url: 'https://www.libribooks.com/cookie-policy',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageData?.title || 'Cookie Policy | libribooks.com',
+      description: 'Read about how we use cookies on our website.',
     },
   };
 };

@@ -17,3 +17,5 @@ if (slug.length > 10 && slug !== "------") {
 } else {
     console.log("FAIL: Slug is still broken or empty.");
 }
+
+export {};

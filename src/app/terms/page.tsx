@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,6 +14,20 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Read the terms and conditions for using libribooks.com.',
     alternates: {
       canonical: '/terms',
+    },
+    other: {
+      'ai-summary': 'Terms and conditions for using libribooks.com.',
+    },
+    openGraph: {
+      title: pageData?.title || 'Terms of Service | libribooks.com',
+      description: 'Read the terms and conditions for using libribooks.com.',
+      type: 'website',
+      url: 'https://www.libribooks.com/terms',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageData?.title || 'Terms of Service | libribooks.com',
+      description: 'Read the terms and conditions for using libribooks.com.',
     },
   };
 };

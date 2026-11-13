@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,6 +14,20 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Our privacy policy outlines how we collect, use, and protect your information.',
     alternates: {
       canonical: '/privacy-policy',
+    },
+    other: {
+      'ai-summary': 'Privacy policy outlining how we collect, use, and protect your information.',
+    },
+    openGraph: {
+      title: pageData?.title || 'Privacy Policy | libribooks.com',
+      description: 'Our privacy policy outlines how we collect, use, and protect your information.',
+      type: 'website',
+      url: 'https://www.libribooks.com/privacy-policy',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageData?.title || 'Privacy Policy | libribooks.com',
+      description: 'Our privacy policy outlines how we collect, use, and protect your information.',
     },
   };
 };

@@ -57,3 +57,5 @@ async function verifyWrite() {
 }
 
 verifyWrite();
+
+export {};

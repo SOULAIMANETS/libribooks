@@ -8,6 +8,8 @@ export interface Book {
   authors: string[];
   coverImage: string;
   review: string;
+  ai_summary?: string;
+  rating?: number;
   purchaseUrls: {
     paperback?: string;
     audiobook?: string;
@@ -33,6 +35,11 @@ export interface Article {
   keywordLinks?: { keyword: string; url: string }[];
   metaTitle?: string;
   metaDescription?: string;
+  ai_summary?: string;
+  rating?: number;
+  status?: 'draft' | 'published' | 'scheduled';
+  published_at?: string;
+  scheduled_at?: string;
 }
 
 export interface Skill {

@@ -4,11 +4,27 @@ import { Footer } from '@/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle2, ShieldCheck, Star, Target, Users } from 'lucide-react';
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: 'How We Choose - Our Book Selection Methodology | Libribooks',
   description: 'Learn about our rigorous selection process for books. We prioritize quality, impact, and actionable insights to help you master life skills.',
   alternates: {
     canonical: '/how-we-choose',
+  },
+  other: {
+    'ai-summary': 'Learn about libribooks rigorous book selection process and methodology.',
+  },
+  openGraph: {
+    title: 'How We Choose | Libribooks',
+    description: 'Learn about our rigorous selection process for books.',
+    type: 'website',
+    url: 'https://www.libribooks.com/how-we-choose',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'How We Choose | Libribooks',
+    description: 'Learn about our rigorous selection process for books.',
   },
 };
 

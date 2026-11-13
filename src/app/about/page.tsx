@@ -7,13 +7,27 @@ import { Metadata } from 'next';
 import { pageService } from '@/lib/services';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'About Us',
   description: 'Learn more about the mission and story behind libribooks.com, your friendly corner of the internet for discovering amazing books.',
   alternates: {
     canonical: '/about',
+  },
+  other: {
+    'ai-summary': 'Learn about the mission and story behind libribooks.com, your friendly corner for discovering amazing books.',
+  },
+  openGraph: {
+    title: 'About Us | libribooks.com',
+    description: 'Learn more about the mission and story behind libribooks.com.',
+    type: 'website',
+    url: 'https://www.libribooks.com/about',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'About Us | libribooks.com',
+    description: 'Learn more about the mission and story behind libribooks.com.',
   },
 };
 

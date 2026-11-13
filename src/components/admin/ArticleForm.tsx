@@ -46,6 +46,8 @@ const formSchema = z.object({
   })).optional().default([]),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
+  status: z.enum(['draft', 'published', 'scheduled']).default('draft'),
+  scheduled_at: z.string().optional(),
 });
 
 type ArticleFormValues = z.infer<typeof formSchema>;
@@ -62,6 +64,8 @@ const defaultFormValues: ArticleFormValues = {
   keywordLinks: [],
   metaTitle: "",
   metaDescription: "",
+  status: "draft",
+  scheduled_at: "",
 };
 
 const ARTICLE_ROLES = [
@@ -76,6 +80,13 @@ interface ArticleFormProps {
   onSubmit: (data: Omit<Article, 'slug'> | Article) => Promise<void>;
   onSuccess?: () => void;
 }
+
+// Status values for articles
+const ARTICLE_STATUSES = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+  { value: 'scheduled', label: 'Scheduled' },
+];
 
 export function ArticleForm({ initialData, onSubmit, onSuccess }: ArticleFormProps) {
   const { toast } = useToast();

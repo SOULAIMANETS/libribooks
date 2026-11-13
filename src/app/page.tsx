@@ -26,8 +26,8 @@ import type { Book, Author } from '@/lib/types';
 import { ArrowRight, BookOpen, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Revalidate every hour instead of force-dynamic — enables caching while keeping content fresh
-export const revalidate = 3600;
+// Revalidate every 5 minutes for fresh content while keeping cache benefits
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await settingsService.get('general');
@@ -50,6 +50,21 @@ export async function generateMetadata(): Promise<Metadata> {
       'book recommendations',
       'libribooks',
     ],
+    other: {
+      'ai-summary': 'Master life-changing skills through curated book summaries and reviews. Explore productivity, psychology, personal finance, and more.',
+    },
+    openGraph: {
+      title: settings?.siteName || 'libribooks | Master 10 Essential Skills Through Books',
+      description: 'Master 50 life-changing books across 10 essential skills including Productivity, Communication, and Personal Finance.',
+      type: 'website',
+      url: 'https://www.libribooks.com',
+      siteName: settings?.siteName || 'libribooks',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: settings?.siteName || 'libribooks | Master 10 Essential Skills Through Books',
+      description: 'Master 50 life-changing books across 10 essential skills.',
+    },
   };
 }
 

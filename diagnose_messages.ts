@@ -92,8 +92,9 @@ async function diagnose() {
         // Cleanup user
         await adminClient.auth.admin.deleteUser(user.user.id);
 
-    } catch (e) {
-        console.error("   ❌ Auth flow failed:", e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error("   ❌ Auth flow failed:", message);
     }
 
     // Cleanup test message
@@ -103,3 +104,5 @@ async function diagnose() {
 }
 
 diagnose();
+
+export {};

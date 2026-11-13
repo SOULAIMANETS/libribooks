@@ -269,8 +269,8 @@ export function ArticlesTable() {
                         <ArticleForm
                             key={editingArticle.slug}
                             initialData={editingArticle}
-                            onSubmit={(articleData) => {
-                                updateArticle({ ...articleData, slug: editingArticle.slug });
+                            onSubmit={async (articleData) => {
+                                await updateArticle({ ...articleData, slug: editingArticle.slug });
                             }}
                             onSuccess={() => { }}
                         />

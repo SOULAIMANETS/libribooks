@@ -1,6 +1,6 @@
 
 import { notFound } from 'next/navigation';
-export const revalidate = 3600;
+export const revalidate = 300;
 import Image from 'next/image';
 import Link from 'next/link';
 import { bookService, authorService } from '@/lib/services';
@@ -49,6 +49,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: description,
     alternates: {
       canonical: pageUrl,
+    },
+    other: {
+      'ai-summary': book.ai_summary || book.review.substring(0, 160),
     },
     openGraph: {
       title: `${book.title} | libribooks.com`,
@@ -129,8 +132,13 @@ export default async function BookDetailPage({ params }: { params: Promise<{ slu
               '@type': 'Person',
               name: 'libribooks.com Team',
             },
+            rating: book.rating ?? undefined,
           } as Review,
-        }}
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: [`.prose`, `[data-ai-hint="book summary"]`],
+          },
+        } as any}
       />
       {schemaFaqs.length > 0 && (
         <JsonLd<FAQPage>
@@ -138,6 +146,10 @@ export default async function BookDetailPage({ params }: { params: Promise<{ slu
             '@context': 'https://schema.org',
             '@type': 'FAQPage',
             mainEntity: schemaFaqs,
+            speakable: {
+              '@type': 'SpeakableSpecification',
+              cssSelector: ['.accordion-content', '.accordion-trigger'],
+            },
           }}
         />
       )}

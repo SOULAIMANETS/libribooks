@@ -7,15 +7,29 @@ import { skillService } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, BookOpen } from 'lucide-react';
 
+export const revalidate = 300;
+
 export const metadata: Metadata = {
     title: 'Skills - Master Life Through Reading',
     description: 'Explore our curated reading guides organized by skill. Find the right books to master productivity, psychology, money, and more.',
     alternates: {
         canonical: '/skills',
     },
+    other: {
+        'ai-summary': 'Explore curated reading guides organized by skill to master productivity, psychology, money, and more.',
+    },
+    openGraph: {
+        title: 'Skills | Libribooks',
+        description: 'Explore our curated reading guides organized by skill.',
+        type: 'website',
+        url: 'https://www.libribooks.com/skills',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Skills | Libribooks',
+        description: 'Explore our curated reading guides organized by skill.',
+    },
 };
-
-export const revalidate = 3600;
 
 export default async function SkillsPage() {
     const skills = await skillService.getAll();

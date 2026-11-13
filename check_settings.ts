@@ -30,3 +30,5 @@ async function checkSettings() {
 }
 
 checkSettings();
+
+export {};

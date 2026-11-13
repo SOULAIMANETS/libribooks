@@ -13,7 +13,7 @@ import { Person } from 'schema-dts';
 import type { Author, Book as BookType } from '@/lib/types';
 
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 
 export async function generateStaticParams() {
@@ -41,6 +41,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: author.bio.substring(0, 160),
     alternates: {
       canonical: pageUrl,
+    },
+    other: {
+      'ai-summary': author.bio.substring(0, 200),
     },
     openGraph: {
       title: author.name,
@@ -87,7 +90,11 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
           description: author.bio,
           image: author.image,
           url: `https://libribooks.com/author/${author.slug}`,
-        }}
+          speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: ['main p', '.font-body'],
+          },
+        } as any}
       />
       <Header />
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
